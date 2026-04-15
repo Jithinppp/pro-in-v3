@@ -1,5 +1,5 @@
 import { FolderKanban, MapPin, Search, PlusCircle, LayoutList, History } from 'lucide-react'
-import Link from 'next/link'
+import { QuickActionCard } from '@/components/ui/QuickActionCard'
 
 export default function PmDashboard() {
   return (
@@ -45,13 +45,7 @@ export default function PmDashboard() {
               { title: "Catalog Search", desc: "Browse models", icon: Search, href: "/pm/catalog" },
               { title: "Past Shows", desc: "Archive", icon: History, href: "/pm/archive" },
             ].map((link, i) => (
-              <Link key={i} href={link.href} className="group flex flex-col items-center justify-center p-6 bg-background border border-border-light rounded-3xl hover:border-border-focus transition-all hover:-translate-y-1 aspect-square sm:aspect-auto sm:h-52 text-center relative overflow-hidden">
-                <div className="p-4 rounded-2xl bg-surface-warm group-hover:bg-border-light transition-colors mb-4">
-                  <link.icon className="w-8 h-8 text-text-secondary" strokeWidth={1.5} />
-                </div>
-                <span className="text-base font-semibold text-text-primary leading-tight px-2">{link.title}</span>
-                <span className="text-xs text-text-tertiary mt-2">{link.desc}</span>
-              </Link>
+              <QuickActionCard key={i} {...link} />
             ))}
           </div>
         </div>

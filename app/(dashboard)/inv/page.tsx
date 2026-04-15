@@ -1,28 +1,24 @@
-import { Package, MapPin, Boxes, PackageOpen, Clock, ShieldCheck, Archive } from 'lucide-react'
-import Link from 'next/link'
+import { Package, MapPin, Boxes, PackageOpen, Clock, ShieldCheck, Archive, LayoutGrid } from 'lucide-react'
+import { QuickActionCard } from '@/components/ui/QuickActionCard'
+import { PageContainer } from '@/components/ui/PageContainer'
+import { PageHeader } from '@/components/ui/PageHeader'
 
 export default function InvDashboard() {
   return (
-    <div className="space-y-16 pb-24 animate-fade-up">
-      <div className="space-y-6">
-        <div className="inline-flex items-center px-3 py-1 bg-white border border-border-light rounded-full text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-          Dashboard
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-5xl font-semibold tracking-tight text-text-primary flex items-center gap-3">
-            Hi Inventory Manager <span className="text-3xl">👋</span>
-          </h1>
-          <p className="text-text-secondary text-lg">Track and manage your inventory</p>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader 
+        label="Dashboard"
+        title="Hi Inventory Manager 👋"
+        subtitle="Track and manage your inventory across all venues and warehouses."
+      />
 
-      <div className="space-y-16">
+      <div className="space-y-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          <div className="relative overflow-hidden p-8 rounded-3xl bg-background border border-border-light">
+          <div className="relative overflow-hidden p-8 rounded-3xl bg-white border border-border-light group hover:border-blue-200 transition-all">
             <div className="flex items-start justify-between mb-8">
-              <div className="p-3 rounded-2xl bg-surface-warm">
-                <Package className="w-6 h-6 text-text-secondary" strokeWidth={1.5} />
+              <div className="p-3 rounded-2xl bg-blue-50 transition-colors group-hover:bg-blue-100">
+                <Package className="w-6 h-6 text-blue-600" strokeWidth={1.5} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -31,31 +27,31 @@ export default function InvDashboard() {
             </div>
             <div>
               <p className="text-[11px] font-medium uppercase tracking-widest mb-2 text-text-secondary">Total Assets</p>
-              <p className="text-4xl font-semibold tracking-tight tabular-nums">0</p>
+              <p className="text-4xl font-semibold tracking-tight tabular-nums text-text-primary">2,840</p>
             </div>
           </div>
 
-          <div className="relative overflow-hidden p-8 rounded-3xl bg-background border border-border-light">
+          <div className="relative overflow-hidden p-8 rounded-3xl bg-white border border-border-light group hover:border-emerald-200 transition-all">
             <div className="flex items-start justify-between mb-8">
-              <div className="p-3 rounded-2xl bg-surface-warm">
-                <Boxes className="w-6 h-6 text-text-secondary" strokeWidth={1.5} />
+              <div className="p-3 rounded-2xl bg-emerald-50 transition-colors group-hover:bg-emerald-100">
+                <Boxes className="w-6 h-6 text-emerald-600" strokeWidth={1.5} />
               </div>
             </div>
             <div>
               <p className="text-[11px] font-medium uppercase tracking-widest mb-2 text-text-secondary">Available</p>
-              <p className="text-4xl font-semibold tracking-tight tabular-nums">0</p>
+              <p className="text-4xl font-semibold tracking-tight tabular-nums text-text-primary">2,412</p>
             </div>
           </div>
 
-          <div className="relative overflow-hidden p-8 rounded-3xl bg-[#fffbeb] border border-[#fef3c7]">
+          <div className="relative overflow-hidden p-8 rounded-3xl bg-white border border-border-light group hover:border-amber-200 transition-all">
             <div className="flex items-start justify-between mb-8">
-              <div className="p-3 rounded-2xl bg-[#fef3c7]/50">
-                <ShieldCheck className="w-6 h-6 text-amber-700" strokeWidth={1.5} />
+              <div className="p-3 rounded-2xl bg-amber-50 transition-colors group-hover:bg-amber-100">
+                <ShieldCheck className="w-6 h-6 text-amber-600" strokeWidth={1.5} />
               </div>
             </div>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-widest mb-2 text-amber-700">Maintenance</p>
-              <p className="text-4xl font-semibold tracking-tight tabular-nums text-amber-900">0</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest mb-2 text-text-secondary">Maintenance</p>
+              <p className="text-4xl font-semibold tracking-tight tabular-nums text-text-primary">12</p>
             </div>
           </div>
 
@@ -70,25 +66,19 @@ export default function InvDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[
               { title: "Asset Management", desc: "Track & manage assets", icon: Package, href: "/inv/assets" },
+              { title: "Catalog Builder", desc: "Manage gear hierarchy", icon: LayoutGrid, href: "/inv/catalog" },
               { title: "Storage Layout", desc: "Warehouse topography", icon: MapPin, href: "/inv/locations" },
               { title: "Kits & Bundles", desc: "Manage bundles", icon: Boxes, href: "/inv/kits" },
               { title: "Consumables", desc: "Track stock levels", icon: PackageOpen, href: "/inv/consumables" },
-              { title: "Activities", desc: "Recent changes", icon: Clock, href: "/inv/activity" },
-              { title: "Audit", desc: "Analytics & reports", icon: ShieldCheck, href: "/inv/reports" },
+              { title: "Audit Log", desc: "Inventory reports", icon: ShieldCheck, href: "/inv/reports" },
               { title: "Equipment Archive", desc: "Retired items", icon: Archive, href: "/inv/assets/archive" },
               { title: "Kits Archive", desc: "Retired kits", icon: Archive, href: "/inv/kits/archive" },
             ].map((link, i) => (
-              <Link key={i} href={link.href} className="group flex flex-col items-center justify-center p-6 bg-background border border-border-light rounded-3xl hover:border-border-focus transition-all hover:-translate-y-1 aspect-square sm:aspect-auto sm:h-52 text-center relative overflow-hidden">
-                <div className="p-4 rounded-2xl bg-surface-warm group-hover:bg-border-light transition-colors mb-4">
-                  <link.icon className="w-8 h-8 text-text-secondary" strokeWidth={1.5} />
-                </div>
-                <span className="text-base font-semibold text-text-primary leading-tight px-2">{link.title}</span>
-                <span className="text-xs text-text-tertiary mt-2">{link.desc}</span>
-              </Link>
+              <QuickActionCard key={i} {...link} />
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   )
 }

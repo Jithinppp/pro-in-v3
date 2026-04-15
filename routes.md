@@ -16,7 +16,10 @@
     /inv/assets/[id]         // Detail & edit metadata
     /inv/consumables         // Gaffer tape, batteries (Quantity-based)
     /inv/locations           // The visual Zone/Rack/Bin hierarchy
-    /inv/catalog             // Category -> Subcategory -> Model builder
+    /inv/catalog             // Catalog Portal & How-to
+    /inv/catalog/categories  // Manage Taxonomy Groups
+    /inv/catalog/subcategories // Manage Types
+    /inv/catalog/models      // Manage Product SKU specs
 
 /tech/*                 // 🛠️ TECHNICIAN / CREW DASHBOARD
     /tech/assignments        // "My Gigs" (Pick-lists for load-in/out)

@@ -43,7 +43,7 @@ export default async function DashboardLayout({
       </header>
 
       {/* Page Content */}
-      <main className="flex-1 w-full max-w-5xl mx-auto pt-28">
+      <main className="flex-1 w-full max-w-7xl mx-auto pt-28">
         {children}
       </main>
     </div>

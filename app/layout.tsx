@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Professional Asset Management System",
 };
 
+import { ToastProvider } from "@/components/providers/ToastProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -23,7 +25,10 @@ export default function RootLayout({
       lang="en"
       className={`${googleSans.variable} font-sans h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ToastProvider />
+        {children}
+      </body>
     </html>
   );
 }
