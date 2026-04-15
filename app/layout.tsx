@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, Geist } from "next/font/google";
 import "./globals.css";
 
 // Google Sans is propriety, so DM_Sans is the exact open-source geometric equivalent on next/font/google!
@@ -14,6 +14,10 @@ export const metadata: Metadata = {
 };
 
 import { ToastProvider } from "@/components/providers/ToastProvider";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+
 
 export default function RootLayout({
   children,
@@ -23,7 +27,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${googleSans.variable} font-sans h-full antialiased`}
+      className={cn("h-full", "antialiased", googleSans.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-full flex flex-col">
         <ToastProvider />
