@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { MapPin, Plus, ChevronRight, Edit2, Trash2, Home, ChevronLeft, Info, Search } from 'lucide-react'
+import { MapPin, Plus, ChevronRight, ChevronDown, Edit2, Trash2, Search, Info } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { PageContainer } from '@/components/ui/PageContainer'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -20,16 +20,99 @@ const locationSchema = z.object({
 
 type LocationFormValues = z.infer<typeof locationSchema>
 
+function LocationNode({ 
+  location, 
+  allLocations, 
+  onEdit, 
+  onDelete, 
+  onAddChild,
+  searchQuery 
+}: { 
+  location: any, 
+  allLocations: any[], 
+  onEdit: (loc: any) => void, 
+  onDelete: (id: string, name: string) => void,
+  onAddChild: (parentId: string) => void,
+  searchQuery: string
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const children = allLocations.filter(loc => loc.parent_id === location.id)
+  const hasChildren = children.length > 0
+
+  return (
+    <div className="flex flex-col w-full">
+      <div className="group flex items-center justify-between p-2 hover:bg-secondary/50 rounded-md transition-all border border-transparent hover:border-border">
+        <div className="flex items-center gap-2 overflow-hidden">
+          {hasChildren ? (
+            <button 
+              onClick={() => setIsOpen(!isOpen)}
+              className="p-1 hover:bg-white rounded transition-colors"
+            >
+              {isOpen ? <ChevronDown className="size-3.5 text-charcoal" /> : <ChevronRight className="size-3.5 text-charcoal" />}
+            </button>
+          ) : (
+            <div className="w-5" /> 
+          )}
+          
+          <div className="flex items-center gap-2">
+            <MapPin className="size-3.5 text-mid-gray" />
+            <span className="text-sm font-medium text-charcoal truncate">{location.name}</span>
+            {location.description && (
+              <span className="text-[10px] text-mid-gray italic truncate opacity-60">({location.description})</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={() => onAddChild(location.id)} 
+            className="p-1.5 text-mid-gray hover:text-charcoal hover:bg-white rounded transition-all"
+            title="Add Sub-location"
+          >
+            <Plus className="size-3.5" />
+          </button>
+          <button 
+            onClick={() => onEdit(location)} 
+            className="p-1.5 text-mid-gray hover:text-charcoal hover:bg-white rounded transition-all"
+          >
+            <Edit2 className="size-3.5" />
+          </button>
+          <button 
+            onClick={() => onDelete(location.id, location.name)} 
+            className="p-1.5 text-mid-gray hover:text-destructive hover:bg-destructive/5 rounded transition-all"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {isOpen && hasChildren && (
+        <div className="ml-6 border-l border-border pl-4 mt-1 space-y-1">
+          {children.map(child => (
+            <LocationNode 
+              key={child.id} 
+              location={child} 
+              allLocations={allLocations} 
+              onEdit={onEdit} 
+              onDelete={onDelete} 
+              onAddChild={onAddChild}
+              searchQuery={searchQuery}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function StorageLocationsPage() {
   const [isPending, startTransition] = useTransition()
   const supabase = createClient()
   
   const [allLocations, setAllLocations] = useState<any[]>([])
-  const [currentPath, setCurrentPath] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
-
-  const currentParentId = currentPath.length > 0 ? currentPath[currentPath.length - 1].id : null
+  const [currentParentId, setCurrentParentId] = useState<string | null>(null)
 
   const createForm = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema),
@@ -62,6 +145,7 @@ export default function StorageLocationsPage() {
         toast.error('Could not create location')
       } else {
         createForm.reset()
+        setCurrentParentId(null)
         toast.success('Location Added')
         fetchLocations()
       }
@@ -124,25 +208,6 @@ export default function StorageLocationsPage() {
     })
   }
 
-  const drillDown = (loc: any) => {
-    setCurrentPath([...currentPath, loc])
-  }
-
-  const goToBreadcrumb = (index: number) => {
-    if (index === -1) {
-      setCurrentPath([])
-    } else {
-      setCurrentPath(currentPath.slice(0, index + 1))
-    }
-  }
-
-  const filteredLocations = allLocations.filter(loc => {
-    const parentMatches = loc.parent_id === currentParentId
-    const searchMatches = searchQuery ? loc.name.toLowerCase().includes(searchQuery.toLowerCase()) : true
-    if (searchQuery) return searchMatches
-    return parentMatches
-  })
-
   const startEditing = (loc: any) => {
     setEditingId(loc.id)
     editForm.reset({
@@ -158,7 +223,7 @@ export default function StorageLocationsPage() {
           href="/inv" 
           className="inline-flex items-center text-xs font-semibold text-mid-gray hover:text-charcoal uppercase tracking-widest transition-colors mb-4 group"
         >
-          <ChevronLeft className="size-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+          <ChevronRight className="size-4 rotate-180 mr-1 group-hover:-translate-x-1 transition-transform" />
           Dashboard
         </Link>
         <PageHeader 
@@ -171,88 +236,42 @@ export default function StorageLocationsPage() {
 
       <div className="flex flex-col lg:flex-row gap-16">
         
-        {/* Navigator Section */}
+        {/* Tree Navigator Section */}
         <div className="flex-[2] space-y-8">
-          <div className="p-4 bg-secondary/30 border border-border rounded-lg flex items-center justify-between gap-4">
-            <div className="flex items-center gap-1 overflow-hidden">
-              <button 
-                onClick={() => goToBreadcrumb(-1)}
-                className={`p-2 rounded-md hover:bg-white transition-all ${currentPath.length === 0 ? 'text-charcoal bg-white border border-border' : 'text-mid-gray'}`}
-              >
-                <Home className="size-4" />
-              </button>
-              {currentPath.map((loc, i) => (
-                <div key={loc.id} className="flex items-center gap-1 flex-shrink-0">
-                  <ChevronRight className="size-3 text-border" />
-                  <button 
-                    onClick={() => goToBreadcrumb(i)}
-                    className={`text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-md transition-all ${i === currentPath.length - 1 ? 'bg-white text-charcoal border border-border' : 'text-mid-gray hover:text-charcoal'}`}
-                  >
-                    {loc.name}
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="relative w-full md:w-64">
-              <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-mid-gray" />
-              <input 
-                placeholder="Find a location..." 
-                className="w-full bg-white border border-border rounded-md pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-charcoal/20 outline-none transition-all"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+          <div className="relative w-full">
+            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-mid-gray" />
+            <input 
+              placeholder="Search locations..." 
+              className="w-full bg-white border border-border rounded-lg pl-10 pr-4 py-3 text-sm focus:ring-1 focus:ring-charcoal/20 outline-none transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredLocations.length > 0 ? (
-              filteredLocations.map((loc) => (
-                <div 
-                  key={loc.id}
-                  className="group flex flex-col p-6 bg-white border border-border rounded-lg transition-all"
-                >
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="p-3 bg-secondary rounded-md text-charcoal transition-all">
-                      <MapPin className="size-5" />
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => startEditing(loc)} className="p-2 text-mid-gray hover:text-charcoal hover:bg-secondary rounded-md transition-all"><Edit2 className="size-4" /></button>
-                      <button onClick={() => onDelete(loc.id, loc.name)} className="p-2 text-mid-gray hover:text-destructive hover:bg-destructive/5 rounded-md transition-all"><Trash2 className="size-4" /></button>
-                    </div>
-                  </div>
-                  
-                  {editingId === loc.id ? (
-                    <div className="space-y-4">
-                      <input {...editForm.register('name')} className="w-full bg-white border border-border rounded px-3 py-2 text-sm font-semibold outline-none focus:ring-1 focus:ring-charcoal/20" />
-                      <div className="flex gap-2">
-                        <Button onClick={editForm.handleSubmit(onUpdate)} className="h-9 text-xs flex-1">Save</Button>
-                        <Button variant="ghost" onClick={() => setEditingId(null)} className="h-9 text-xs flex-1">Cancel</Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <h3 className="font-display font-semibold text-lg text-charcoal">{loc.name}</h3>
-                      <p className="text-xs text-mid-gray font-light line-clamp-1 italic">{loc.description || 'No description provided'}</p>
-                    </div>
-                  )}
-
-                  {!searchQuery && !editingId && (
-                    <button 
-                      onClick={() => drillDown(loc)}
-                      className="mt-8 flex items-center text-[10px] font-bold text-mid-gray uppercase tracking-widest hover:text-charcoal transition-colors group/btn"
-                    >
-                      Explore Zone
-                      <ChevronRight className="size-3 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                    </button>
-                  )}
-                </div>
-              ))
+          <div className="p-6 bg-white border border-border rounded-xl space-y-4">
+            {allLocations.filter(loc => !loc.parent_id).length > 0 ? (
+              <div className="space-y-2">
+                {allLocations
+                  .filter(loc => !loc.parent_id)
+                  .map(loc => (
+                    <LocationNode 
+                      key={loc.id} 
+                      location={loc} 
+                      allLocations={allLocations} 
+                      onEdit={startEditing} 
+                      onDelete={onDelete} 
+                      onAddChild={(id) => setCurrentParentId(id)}
+                      searchQuery={searchQuery}
+                    />
+                  ))
+                }
+              </div>
             ) : (
-              <div className="col-span-full py-24 flex flex-col items-center justify-center text-center space-y-6 bg-white border border-dashed border-border rounded-lg">
+              <div className="py-24 flex flex-col items-center justify-center text-center space-y-6">
                 <MapPin className="size-12 text-border" />
                 <div className="space-y-2">
-                  <p className="text-base font-display font-semibold text-charcoal">Terminal Location</p>
-                  <p className="text-sm text-mid-gray font-light">No nested sub-zones found at this level.</p>
+                  <p className="text-base font-display font-semibold text-charcoal">No Locations Found</p>
+                  <p className="text-sm text-mid-gray font-light">Start by adding your first top-level warehouse zone.</p>
                 </div>
               </div>
             )}
@@ -265,23 +284,47 @@ export default function StorageLocationsPage() {
             <div className="space-y-2">
               <h2 className="text-xl font-display font-semibold flex items-center gap-3 text-charcoal">
                 <Plus className="size-5" />
-                Add Room
+                {currentParentId ? 'Add Sub-Location' : 'Add Root Location'}
               </h2>
               <p className="text-xs text-mid-gray leading-relaxed font-light">
                 {currentParentId 
-                  ? `This position will be nested inside "${currentPath[currentPath.length - 1].name}"`
+                  ? `This location will be nested inside a selected zone.`
                   : 'Specify a new top-level facility or global warehouse boundary.'}
               </p>
             </div>
 
-            <form onSubmit={createForm.handleSubmit(onCreate)} className="space-y-6">
-              <Input label="Name / Label" placeholder="e.g. Rack A-1" {...createForm.register('name')} error={createForm.formState.errors.name?.message} />
-              <Input label="Description" placeholder="Optional notes..." {...createForm.register('description')} />
-              
-              <Button isLoading={isPending} type="submit" className="w-full h-11">
-                Register Location
+            {editingId ? (
+              <form onSubmit={editForm.handleSubmit(onUpdate)} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-mid-gray">Editing Location</label>
+                  <Input label="Name / Label" placeholder="e.g. Rack A-1" {...editForm.register('name')} error={editForm.formState.errors.name?.message} />
+                  <Input label="Description" placeholder="Optional notes..." {...editForm.register('description')} />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="w-full h-11">Save Changes</Button>
+                  <Button variant="ghost" onClick={() => setEditingId(null)} className="w-full h-11">Cancel</Button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={createForm.handleSubmit(onCreate)} className="space-y-6">
+                <Input label="Name / Label" placeholder="e.g. Rack A-1" {...createForm.register('name')} error={createForm.formState.errors.name?.message} />
+                <Input label="Description" placeholder="Optional notes..." {...createForm.register('description')} />
+                
+                <Button isLoading={isPending} type="submit" className="w-full h-11">
+                  Register Location
+                </Button>
+              </form>
+            )}
+
+            {currentParentId && (
+              <Button 
+                variant="ghost" 
+                onClick={() => setCurrentParentId(null)} 
+                className="w-full h-10 text-xs border border-dashed border-border"
+              >
+                Reset to Root Level
               </Button>
-            </form>
+            )}
 
             <div className="pt-6 border-t border-border flex gap-4 text-mid-gray">
               <Info className="size-4 flex-shrink-0 mt-1" />
@@ -295,4 +338,3 @@ export default function StorageLocationsPage() {
     </PageContainer>
   )
 }
-

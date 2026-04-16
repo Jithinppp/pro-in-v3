@@ -86,6 +86,7 @@ export default async function InvDashboard() {
               { title: "Storage Layout", desc: "Define warehouse topography, rooms, and bin identifiers.", icon: MapPin, href: "/inv/locations" },
               { title: "Kits & Bundles", desc: "Manage logical asset groupings and equipment packages.", icon: Boxes, href: "/inv/kits" },
               { title: "Consumables", desc: "Stock levels for non-serialized items and supplies.", icon: PackageOpen, href: "/inv/consumables" },
+              { title: "Supplier Directory", desc: "Manage vendor contacts, performance ratings, and procurement.", icon: ShieldCheck, href: "/inv/suppliers" },
               { title: "Audit Log", desc: "Historical records of movements and maintenance events.", icon: ShieldCheck, href: "/inv/reports" },
               { title: "Equipment Archive", desc: "Retired hardware history and decommissioning records.", icon: Archive, href: "/inv/assets/archive" },
               { title: "Kits Archive", desc: "Records of retired equipment kits and past projects.", icon: Archive, href: "/inv/kits/archive" },

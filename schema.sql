@@ -1,5 +1,6 @@
 -- AV Management System Master Schema
 -- Database: PostgreSQL (Supabase)
+-- This is the merged industrial-grade schema combining the DB export and the Master Blueprint.
 
 -- EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -8,11 +9,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TYPE asset_status AS ENUM ('AVAILABLE', 'RESERVED', 'OUT', 'PENDING_QC', 'MAINTENANCE', 'QUARANTINED');
 CREATE TYPE item_condition AS ENUM ('EXCELLENT', 'GOOD', 'FAIR', 'POOR');
 CREATE TYPE project_status AS ENUM ('PLANNING', 'ACTIVE', 'COMPLETED');
-CREATE TYPE user_role AS ENUM ('ADMIN', 'INV', 'PM', 'TECH');
+CREATE TYPE user_role AS ENUM ('ADMIN', 'TECH', 'PM', 'INV');
 CREATE TYPE item_type AS ENUM ('ASSET', 'CONSUMABLE');
 CREATE TYPE reservation_status AS ENUM ('RESERVED', 'OUT', 'RETURNED');
 
--- 0. USER PROFILES (Must be created first for Foreign Keys)
+-- 0. USER PROFILES
 CREATE TABLE public.profiles (
     id uuid PRIMARY KEY REFERENCES auth.users(id),
     email text NOT NULL UNIQUE,
@@ -54,6 +55,19 @@ CREATE TABLE public.models (
 );
 
 -- 2. PHYSICAL INVENTORY
+CREATE TABLE public.suppliers (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name text NOT NULL,
+    contact_name text,
+    email text,
+    phone text,
+    website text,
+    address text,
+    notes text,
+    rating smallint,
+    created_at timestamptz DEFAULT now()
+);
+
 CREATE TABLE public.storage_locations (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     parent_id uuid REFERENCES public.storage_locations(id),
@@ -66,8 +80,12 @@ CREATE TABLE public.storage_locations (
 CREATE TABLE public.assets (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     model_id uuid REFERENCES public.models(id),
+    supplier_id uuid REFERENCES public.suppliers(id),
     asset_code text NOT NULL UNIQUE,
     serial_number text,
+    description text,
+    weight text,
+    invoice_number text,
     status asset_status DEFAULT 'AVAILABLE',
     condition item_condition DEFAULT 'EXCELLENT',
     location_id uuid REFERENCES public.storage_locations(id),

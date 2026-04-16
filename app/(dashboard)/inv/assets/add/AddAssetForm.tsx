@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm, Resolver } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Input } from '@/components/ui/Input'
@@ -26,10 +26,14 @@ const assetSchema = z.object({
   serial_number: z.string().optional(),
   case_number: z.string().optional(),
   purchase_date: z.string().optional(),
-  purchase_cost: z.coerce.number().optional(),
+  purchase_cost: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().optional()),
   warranty_expiry: z.string().optional(),
   last_maintenance: z.string().optional(),
   next_maintenance: z.string().optional(),
+  description: z.string().optional(),
+  weight: z.string().optional(),
+  invoice_number: z.string().optional(),
+  supplier_id: z.string().optional(),
 })
 
 type AssetFormValues = z.infer<typeof assetSchema>
@@ -39,9 +43,10 @@ interface AddAssetFormProps {
   subcategories: { id: string; name: string; code: string; category_id: string }[]
   models: { id: string; name: string; brand: string; code: string; subcategory_id: string }[]
   locations: { id: string; name: string }[]
+  suppliers: { id: string; name: string }[]
 }
 
-export function AddAssetForm({ categories, subcategories, models, locations }: AddAssetFormProps) {
+export function AddAssetForm({ categories, subcategories, models, locations, suppliers }: AddAssetFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const [isPending, startTransition] = useTransition()
@@ -59,7 +64,7 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
     watch,
     formState: { errors },
   } = useForm<AssetFormValues>({
-    resolver: zodResolver(assetSchema) as Resolver<AssetFormValues>,
+    resolver: zodResolver(assetSchema),
     defaultValues: {
       status: 'AVAILABLE',
       condition: 'EXCELLENT',
@@ -238,12 +243,18 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
                 <div className="h-px w-full bg-border"></div>
               </div>
               
-              <div className="p-10 bg-white border border-border rounded-lg grid grid-cols-1 md:grid-cols-2 gap-10">
-                <Input label="Purchase Cost" type="number" step="0.01" placeholder="0.00" {...register('purchase_cost')} />
-                <Input label="Purchase Date" type="date" {...register('purchase_date')} />
-                <Input label="Warranty Expiry" type="date" {...register('warranty_expiry')} />
-                <Input label="Case / Rack ID" placeholder="e.g. CASE-42" {...register('case_number')} />
-              </div>
+               <div className="p-10 bg-white border border-border rounded-lg grid grid-cols-1 md:grid-cols-2 gap-10">
+                 <Input label="Purchase Cost" type="number" step="0.01" placeholder="0.00" {...register('purchase_cost')} />
+                 <Input label="Purchase Date" type="date" {...register('purchase_date')} />
+                 <Input label="Warranty Expiry" type="date" {...register('warranty_expiry')} />
+                 <Input label="Invoice Number" placeholder="INV-000" {...register('invoice_number')} />
+                 <Input label="Weight / Dim" placeholder="e.g. 12kg / 20x10x10" {...register('weight')} />
+                 <Input label="Case / Rack ID" placeholder="e.g. CASE-42" {...register('case_number')} />
+                 <div className="md:col-span-2">
+                   <Input label="Technical Description" placeholder="Additional specifications or notes..." {...register('description')} />
+                 </div>
+               </div>
+
             </section>
 
             {/* Maintenance Section */}
@@ -278,14 +289,15 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-mid-gray uppercase tracking-widest ml-1">Unique System Code</label>
                   <div className="relative group">
-                    <input 
-                      readOnly 
-                      {...register('asset_code')}
-                      className={cn(
-                        "w-full h-14 bg-secondary border border-border rounded-md text-charcoal font-display font-bold text-xl text-center tracking-widest pr-4 outline-none transition-all"
-                      )}
-                      placeholder="----"
-                    />
+                     <input 
+                       readOnly 
+                       {...register('asset_code')}
+                       className={cn(
+                         "w-full h-14 bg-secondary border border-border rounded-md text-charcoal font-display font-bold text-center tracking-widest pr-4 outline-none transition-all"
+                       )}
+                       placeholder="----"
+                     />
+
                     {isGenerating && <div className="absolute inset-0 bg-white/50 animate-pulse rounded-md" />}
                   </div>
                 </div>
@@ -298,15 +310,33 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
                   className="h-11"
                 />
 
-                <Select 
-                  label="Storage Location" 
-                  {...register('location_id')} 
-                  options={locations.map(l => ({ value: l.id, label: l.name }))}
-                  error={errors.location_id?.message}
-                  className="h-11"
-                />
+                 <Select 
+                   label="Storage Location" 
+                   {...register('location_id')} 
+                   options={locations.map(l => ({ value: l.id, label: l.name }))}
+                   error={errors.location_id?.message}
+                   className="h-11"
+                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <div className="flex items-center justify-between px-1">
+                     <label className="text-[11px] font-bold text-mid-gray uppercase tracking-widest">Supplier</label>
+                     <Link 
+                       href="/inv/suppliers" 
+                       className="text-[10px] font-semibold text-charcoal hover:underline uppercase tracking-tighter"
+                     >
+                       + Add New
+                     </Link>
+                   </div>
+                   <Select 
+                     {...register('supplier_id')} 
+                     options={suppliers.map(s => ({ value: s.id, label: s.name }))}
+                     className="h-11"
+                   />
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+
                   <Select label="Status" {...register('status')} options={[{ value: 'AVAILABLE', label: 'Available' }, { value: 'MAINTENANCE', label: 'Maintenance' }]} className="h-11" />
                   <Select label="Condition" {...register('condition')} options={[{ value: 'EXCELLENT', label: 'Excellent' }, { value: 'GOOD', label: 'Good' }, { value: 'FAIR', label: 'Fair' }]} className="h-11" />
                 </div>

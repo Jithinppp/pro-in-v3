@@ -1,124 +1,89 @@
-<div align="center">
-  <h1>⚡ Asset Management System (AVMS)</h1>
-  <p><strong>A professional-grade, Next.js and Supabase-backed minimalist internal tooling system engineered strictly for Audio-Visual production logistics.</strong></p>
+# 🎧 AV Management System (AVMS) - The AV Logistics Engine
 
-  <p>
-    <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js" />
-    <img src="https://img.shields.io/badge/Supabase-DB_%26_Auth-3ECF8E?style=for-the-badge&logo=supabase" alt="Supabase" />
-    <img src="https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind" />
-    <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  </p>
-</div>
+AVMS is a professional-grade Enterprise Resource Planning (ERP) solution specifically engineered for the unique, high-pressure environment of Audio-Visual (AV) production companies. 
+
+Unlike generic inventory systems, AVMS is built as a **Logistics Engine**. It solves the three biggest pain points in the AV industry: **The Double-Booking Problem**, **The Missing Cable Problem**, and **The Broken Gear Problem**.
 
 ---
 
-## 🚀 The Vision
-
-Most generic inventory apps fail in the Audio-Visual industry because they don't understand the "AV Reality"—complex venue logistics, scanning serialized barcodes onto a truck in the dark, and preventing disaster by double-booking high-value gear.
-
-**This is a strict logistics-first system.** It eliminates equipment conflicts, tracks venue constraints, prevents asset loss, tracks damages, and ensures every piece of gear arriving at a show is QC-passed.
+## 🎯 Project Vision
+In the AV world, a mistake in logistics—like double-booking a high-end mixer or forgetting a critical power cable—can ruin an entire event. AVMS eliminates these risks by separating the **Logical Request** (what is needed) from the **Physical Execution** (which specific unit is packed).
 
 ---
 
-## 🛠️ Technical Stack
+## 🏗️ Core System Architecture
 
-| Category | Technology |
-|---|---|
-| **Framework** | Next.js (App Router, Server Actions) |
-| **Backend & Auth** | Supabase (PostgreSQL, Edge Auth, Storage) |
-| **State Management** | Zustand |
-| **UI Components** | React Hook Form, Zod, Lucide-React |
-| **Styling** | Tailwind CSS v4 (Custom flat geometric design system) |
+### 1. The Unified Catalog (The "DNA")
+The system uses a strict 3-tier hierarchy to define equipment. No physical units live here; this is the "Source of Truth" for specifications.
+**`Categories`** $\to$ **`Subcategories`** $\to$ **`Models`**
+*Example: Audio $\to$ Speakers $\to$ QSC K12.2*
+
+### 2. Dual-Track Inventory (The "Gear")
+AVMS distinguishes between items based on their value and tracking requirements:
+*   **Serialized Assets (The "Money" Gear):** High-value items tracked individually. Each has a unique `asset_code` (e.g., `AUD-SPK-QSC-0001`), serial number, and individual maintenance history.
+*   **Consumables (The "Bulk" Gear):** Low-value items tracked by quantity (e.g., Gaffer Tape, XLR Cables). These use `low_stock_threshold` alerts to trigger re-ordering.
+
+### 3. The Reservation Engine (Conflict Prevention)
+The heart of the app is a **Date-Range Overlap Logic**. 
+*   **Timeline Tracking:** Instead of a simple "Available" toggle, the system tracks assets across a calendar.
+*   **Overlap Logic:** An asset is blocked if `(New Start Date $\le$ Existing End Date) AND (Existing Start Date $\le$ New End Date)`.
+*   **Intention vs. Execution:** PMs request a **Model** (e.g., "I need 4 QSC K12s"), and the system ensures the *capacity* exists. The Technician then assigns the specific **Assets** (barcodes) during the load-out.
+
+### 4. Warehouse Topography
+To eliminate "Where is it?" confusion, AVMS implements a hierarchical physical map:
+**`Zone`** $\to$ **`Rack`** $\to$ **`Shelf`** $\to$ **`Bin`**
+Assets are further linked to **Case Numbers**, mirroring how gear is physically packed into road cases.
 
 ---
 
 ## 👥 Role-Based Access Control (RBAC)
 
-The system uses Next.js middleware routing and Supabase RLS policies to divide the app into distinct, ultra-focused dashboards tailored beautifully to what each user actually cares about.
+The system is divided into four ultra-focused dashboards, ensuring users only see the tools they need for their specific job.
 
-> [!NOTE] 
-> Unauthorized users are automatically rejected at the middleware level, enforcing absolute data isolation between different operational teams.
+### 👑 System Admin (`ADMIN`)
+**Purpose:** System Oversight & Governance.
+*   **User Management:** Onboarding staff and managing role assignments.
+*   **Global Configuration:** Setting up system-wide constants and security policies.
+*   **Audit Logs:** Monitoring the `activity_log` to see who changed what and when.
 
-### 👑 System Admin (`/admin`)
-**Focus:** System integrity and personnel management.
-- Handles user onboarding and manages global profiles.
-- Configures the RBAC infrastructure.
+### 📦 Inventory Manager (`INV`)
+**Purpose:** The "Gatekeeper" of Warehouse Integrity.
+*   **Catalog Governance:** Managing the `Category $\to$ Subcategory $\to$ Model` hierarchy.
+*   **Asset Onboarding:** Registering new serialized gear and generating internal asset codes.
+*   **The QC Gate:** The only role capable of moving gear from `PENDING_QC` back to `AVAILABLE`.
+*   **Location Mapping:** Designing the physical warehouse topography.
+*   **Maintenance Oversight:** Reviewing maintenance logs and approving repairs.
 
-### 📅 Project Manager / PM (`/pm`)
-**Focus:** The Planner. Organizes timelines, tracks venues, and builds the blueprint.
-- **Venues:** Creates reusable venue topography profiles regarding dock specifics, ramps, and heights.
-- **Model Booking:** PMs do **not** dictate specific physical barcodes. They build the quotes by assigning abstract *Models*. 
-- **Conflict Prevention:** Real-time visibility against inventory warnings avoiding overlaps on high-dollar models.
+### 📅 Project Manager (`PM`)
+**Purpose:** The "Planner" and Resource Allocator.
+*   **Project Blueprinting:** Creating projects with strict date ranges and venue specifics.
+*   **Venue Logistics:** Tracking dock heights, elevator dimensions, and onsite contacts to ensure the truck actually fits.
+*   **Equipment Requesting:** Building the "Equipment List" by requesting Models.
+*   **Sub-Rental Tracking:** Marking items as `is_sub_rental` to ensure external gear is returned to the rental house.
 
-### 📦 Inventory Manager / INV (`/inv`)
-**Focus:** The Gatekeeper. Owns the physical warehouse and the central database catalog.
-- **Taxonomy:** Enforces a strict `Category → Subcategory → Model` hierarchy.
-- **Warehouse Location:** Builds physical locations (`Zone → Rack → Shelf → Bin`).
-- **Asset Registration:** Registers high-value serialized `Assets` into the system, generating distinct internal SKUs.
-
-### 🛠️ Technician / TECH (`/tech`)
-**Focus:** Field Execution and Warehouse Loading.
-- **Pull-sheets:** Resolves the PM's abstract "Requested Models" by scanning exact `Asset` barcodes onto the truck.
-- **Return & QC:** Handles the returning truck, scanning items back into the warehouse and moving them to `PENDING_QC`.
-- **Maintenance:** Logs service records, replaces parts, and uploads photos of broken gear.
-
----
-
-## 🗺️ Routing Architecture
-
-> [!TIP]
-> The UI utilizes a premium, global floating glassmorphic internal navigation to ensure maximum horizontal and vertical space for heavy data tables.
-
-```text
-/                       [Public Sign-In]
-│
-├── /admin              [👑 ADMIN CONSOLE]
-│   ├── /users          (Manage profiles)
-│   └── /security       (Audit logs)
-│
-├── /pm                 [📅 PROJECT MANAGER]
-│   ├── /projects       (Kanban timelines & blueprinting)
-│   └── /venues         (Location physical tracking)
-│
-├── /inv                [📦 INVENTORY MANAGER]
-│   ├── /assets         (Serialized tracking)
-│   ├── /catalog        (Models framework)
-│   ├── /consumables    (Quantity decrementing)
-│   └── /locations      (Warehouse mapping)
-│
-└── /tech               [🛠️ TECHNICIANS]
-    ├── /scan           (Global Barcode Input)
-    ├── /assignments    (Load-In/Out Picklists)
-    └── /maintenance    (Repair Ticketing)
-```
+### 🛠️ Technician (`TECH`)
+**Purpose:** The "Executor" of Field Logistics.
+*   **Digital Pick-Lists:** Using a mobile interface to scan specific Assets onto the truck, moving status from `RESERVED` $\to$ `OUT`.
+*   **Return Scanning:** Scanning gear back into the warehouse, moving status from `OUT` $\to$ `PENDING_QC`.
+*   **Damage Reporting:** Immediately marking an item as `DAMAGED` upon return, which triggers a status change to `MAINTENANCE` and blocks it from future bookings.
+*   **Maintenance Execution:** Logging repairs, replacing parts, and uploading photo evidence of fixes.
 
 ---
 
-## 🏗️ Core Business Logic
+## 🔄 The Asset Lifecycle (The Golden Path)
 
-### 1. The "Model vs Asset" Pipeline
-A major trap in generic software is forcing planners to pick specific physical gear upfront. AVMS separates intention from execution:
-*   **Intention (The PM):** Adds an abstract request (e.g., 4 Active Subwoofers).
-*   **Execution (The TECH):** Walks up to the shelf and scans 4 specific barcodes. The backend dynamically bridges the PM's intent with exact physical locations.
-
-### 2. The Conflict Engine (Overlap Checking)
-When a PM tries to add equipment to an event, the system calculates availability by strictly checking date crossovers through a pure SQL function.
-
-> [!WARNING]
-> `Available = (Total Owned) - (Items overlapping on other active Projects) - (Items in Maintenance/QC)`
-
-### 3. The Physical Status Lifecycle
-High dollar items must flow cleanly through physical states. Missing a state means losing a $5000 asset.
-1. `AVAILABLE`: Checked-in and sitting on the warehouse shelf.
-2. `RESERVED`: Abstractly requested for a future PM gig.
-3. `OUT`: Physically scanned onto the truck.
-4. `PENDING_QC`: Returned from the venue, requiring engineering check.
-5. `MAINTENANCE` / `QUARANTINED`: Broken, requiring service tracking.
+1.  **`AVAILABLE`**: Gear is QC-passed and sitting in its assigned `storage_location`.
+2.  **`RESERVED`**: A PM has requested this model for a project. It is blocked on the calendar but still in the warehouse.
+3.  **`OUT`**: A Tech has scanned the barcode. The gear is physically on the truck/at the venue.
+4.  **`PENDING_QC`**: Gear is returned. It is physically back but cannot be re-booked until the `INV` manager inspects it.
+5.  **`MAINTENANCE` / `QUARANTINED`**: Gear is broken or unsafe. It is completely removed from the reservation engine until repaired.
 
 ---
 
-## 🛑 Out of Scope (For Post-MVP)
-To maintain extreme velocity and focus precisely on eliminating double-booking logistics in the warehouse, the MVP phase deliberately skips:
-- High-level Financials, Quoting, and client Invoicing.
-- Rigid "Flypack/Kitting" features (Locking multiple assets into a parent rack).
-- Third-party Cross-rentals / Sub-rental PO tracking.
+## 🛠️ Technical Stack
+*   **Framework:** Next.js 15 (App Router, Server Actions)
+*   **Backend:** Supabase (PostgreSQL, Auth, Storage)
+*   **State:** Zustand (Global session and project state)
+*   **Validation:** Zod + React Hook Form
+*   **Dates:** `date-fns` (For complex range overlap calculations)
+*   **UI:** Tailwind CSS v4 + Lucide-React

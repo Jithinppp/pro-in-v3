@@ -14,6 +14,10 @@ export async function addAssets(formData: {
   warranty_expiry?: string
   last_maintenance?: string
   next_maintenance?: string
+  description?: string
+  weight?: string
+  invoice_number?: string
+  supplier_id?: string
   items: { asset_code: string; serial_number: string }[]
 }) {
   const supabase = await createClient()
@@ -32,6 +36,10 @@ export async function addAssets(formData: {
         warranty_expiry: formData.warranty_expiry || null,
         last_maintenance: formData.last_maintenance || null,
         next_maintenance: formData.next_maintenance || null,
+        description: formData.description,
+        weight: formData.weight,
+        invoice_number: formData.invoice_number,
+        supplier_id: formData.supplier_id,
         asset_code: item.asset_code,
         serial_number: item.serial_number,
       }))

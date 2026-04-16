@@ -1,7 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { MoveAssetModal } from './MoveAssetModal'
+import { useRouter } from 'next/navigation'
+import { ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
 
 interface AssetTableProps {
   assets: any[]
@@ -32,6 +37,9 @@ const getConditionStyles = (condition: string) => {
 }
 
 export function AssetTable({ assets }: AssetTableProps) {
+  const [movingAsset, setMovingAsset] = useState<any | null>(null)
+  const router = useRouter()
+
   if (assets.length === 0) {
     return (
       <div className="py-24 text-center bg-white border border-dashed border-border rounded-lg">
@@ -82,15 +90,28 @@ export function AssetTable({ assets }: AssetTableProps) {
                 </span>
               </td>
               <td className="px-6 py-5 text-right">
-                <button className="text-[11px] font-bold text-mid-gray uppercase tracking-widest hover:text-charcoal transition-colors opacity-0 group-hover:opacity-100">
-                  Manage
-                </button>
+                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Link 
+                    href={`/inv/assets/${asset.id}`}
+                    className="p-2 text-mid-gray hover:text-charcoal hover:bg-secondary rounded-md transition-all"
+                    title="Manage Asset"
+                  >
+                    <ChevronRight className="size-4" />
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {movingAsset && (
+        <MoveAssetModal 
+          asset={movingAsset} 
+          onClose={() => setMovingAsset(null)} 
+          onSuccess={() => router.refresh()} 
+        />
+      )}
     </div>
   )
 }
-
