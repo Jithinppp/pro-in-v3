@@ -7,6 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { PageContainer } from '@/components/ui/PageContainer'
 import { Plus, Package, Edit2, Check, X, Trash2, ChevronLeft } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
@@ -97,7 +99,6 @@ export default function CategoriesPage() {
     if (!confirm(`Permanently delete category "${name}"?`)) return
     
     startTransition(async () => {
-      // Deletion Guard: Check for children (subcategories)
       const { count } = await supabase
         .from('subcategories')
         .select('*', { count: 'exact', head: true })
@@ -120,96 +121,106 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto py-12 px-4 md:px-0 space-y-10 animate-fade-up">
-      {/* Navigation & Header */}
-      <div className="space-y-6">
+    <PageContainer>
+      <div className="mb-12">
         <Link 
           href="/inv/catalog" 
-          className="inline-flex items-center text-xs font-bold text-text-tertiary hover:text-action-primary uppercase tracking-widest transition-colors mb-4 group"
+          className="inline-flex items-center text-xs font-semibold text-mid-gray hover:text-charcoal uppercase tracking-widest transition-colors mb-4 group"
         >
-          <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+          <ChevronLeft className="size-4 mr-1 group-hover:-translate-x-1 transition-transform" />
           Back to Portal
         </Link>
-        <div className="space-y-1">
-          <h1 className="text-3xl font-semibold tracking-tight text-text-primary underline decoration-border-light decoration-4 underline-offset-8">Category Manager</h1>
-          <p className="text-text-secondary text-sm">Define top-level gear taxonomy groups.</p>
-        </div>
+        <PageHeader 
+          label="Catalog Portal"
+          title="Category Manager"
+          subtitle="Define top-level gear taxonomy groups and codes."
+          className="!mb-0 !items-start !text-left"
+        />
       </div>
 
-      {/* Creation Section */}
-      <section className="space-y-4">
-        <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Register New Category
-        </h2>
-        
-        <form onSubmit={createForm.handleSubmit(onCreate)} className="p-6 bg-white border border-border-light rounded-2xl space-y-4 shadow-none">
-          <div className="flex flex-col md:flex-row items-end gap-4">
-            <div className="w-full md:w-32">
-              <Input label="Code" placeholder="AUD" {...createForm.register('code')} error={createForm.formState.errors.code?.message} className="uppercase" />
-            </div>
-            <div className="flex-1 w-full">
-              <Input label="Category Name" placeholder="e.g. Audio Equipment" {...createForm.register('name')} error={createForm.formState.errors.name?.message} />
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+        {/* Left Column: Register Form */}
+        <section className="lg:col-span-1 space-y-6">
+          <div className="flex items-center gap-2 text-mid-gray">
+            <Plus className="size-4" />
+            <h2 className="text-xs uppercase tracking-[0.2em] font-bold">New Category</h2>
           </div>
-          <div className="flex flex-col md:flex-row items-end gap-4">
-            <div className="flex-1 w-full">
-              <Input label="Description" placeholder="Optional notes..." {...createForm.register('description')} />
-            </div>
-            <Button isLoading={isPending} type="submit" size="lg" className="whitespace-nowrap font-bold">Add Category</Button>
-          </div>
-        </form>
-      </section>
+          
+          <form onSubmit={createForm.handleSubmit(onCreate)} className="p-8 bg-white rounded-lg border border-border space-y-6">
+            <Input 
+              label="Code" 
+              placeholder="AUD" 
+              {...createForm.register('code')} 
+              error={createForm.formState.errors.code?.message} 
+              className="uppercase font-display font-semibold" 
+            />
+            <Input 
+              label="Category Name" 
+              placeholder="e.g. Audio Equipment" 
+              {...createForm.register('name')} 
+              error={createForm.formState.errors.name?.message} 
+            />
+            <Input 
+              label="Description" 
+              placeholder="Optional notes..." 
+              {...createForm.register('description')} 
+            />
+            <Button isLoading={isPending} type="submit" className="w-full">
+              Add Category
+            </Button>
+          </form>
+        </section>
 
-      {/* List Section */}
-      <section className="space-y-4">
-        <h2 className="text-sm font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-          <Package className="w-4 h-4" />
-          Existing Categories
-        </h2>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border-light text-[10px] font-bold text-text-tertiary uppercase tracking-widest">
-                <th className="py-4 font-bold w-24">CODE</th>
-                <th className="py-4 font-bold w-48">NAME</th>
-                <th className="py-4 font-bold">DESCRIPTION</th>
-                <th className="py-4 font-bold text-right w-32">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {categories.map((cat) => (
-                <tr key={cat.id} className="border-b border-border-light/50 hover:bg-surface-warm/30 transition-colors group">
-                  {editingId === cat.id ? (
-                    <>
-                      <td className="py-3 pr-2 font-bold"><input {...editForm.register('code')} className="w-full bg-surface-warm border border-border-light rounded px-2 py-1.5 uppercase outline-none focus:border-border-focus" /></td>
-                      <td className="py-3 pr-2"><input {...editForm.register('name')} className="w-full bg-surface-warm border border-border-light rounded px-2 py-1.5 outline-none focus:border-border-focus" /></td>
-                      <td className="py-3 pr-2"><input {...editForm.register('description')} className="w-full bg-surface-warm border border-border-light rounded px-2 py-1.5 outline-none focus:border-border-focus" /></td>
-                      <td className="py-3 text-right flex items-center justify-end gap-1">
-                        <button onClick={editForm.handleSubmit(onUpdate)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg"><Check className="w-5 h-5" /></button>
-                        <button onClick={() => setEditingId(null)} className="p-2 text-text-tertiary hover:bg-surface-warm rounded-lg"><X className="w-5 h-5" /></button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="py-5 font-bold tracking-wider uppercase">{cat.code}</td>
-                      <td className="py-5 font-medium">{cat.name}</td>
-                      <td className="py-5 text-text-tertiary">{cat.description || '-'}</td>
-                      <td className="py-5 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-0.5 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => startEditing(cat)} className="p-2 text-text-tertiary hover:text-text-primary hover:bg-white rounded-lg border border-transparent hover:border-border-light transition-all"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => onDelete(cat.id, cat.name)} className="p-2 text-text-tertiary hover:text-error hover:bg-error/5 rounded-lg border border-transparent transition-all"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </td>
-                    </>
-                  )}
+        {/* Right Column: Existing List */}
+        <section className="lg:col-span-2 space-y-6">
+          <div className="flex items-center gap-2 text-mid-gray">
+            <Package className="size-4" />
+            <h2 className="text-xs uppercase tracking-[0.2em] font-bold">Existing Taxonomy</h2>
+          </div>
+          
+          <div className="bg-white rounded-lg border border-border overflow-hidden">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border bg-secondary/30 text-[10px] font-bold text-mid-gray uppercase tracking-widest">
+                  <th className="px-6 py-4 w-24">CODE</th>
+                  <th className="px-6 py-4 w-48">NAME</th>
+                  <th className="px-6 py-4">DESCRIPTION</th>
+                  <th className="px-6 py-4 text-right w-32">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+              </thead>
+              <tbody className="text-sm">
+                {categories.map((cat) => (
+                  <tr key={cat.id} className="border-b border-border/50 hover:bg-secondary/20 transition-colors group">
+                    {editingId === cat.id ? (
+                      <>
+                        <td className="px-6 py-3"><input {...editForm.register('code')} className="w-full bg-white border border-border rounded px-2 py-1.5 uppercase font-semibold outline-none focus:ring-1 focus:ring-link/50" /></td>
+                        <td className="px-6 py-3"><input {...editForm.register('name')} className="w-full bg-white border border-border rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-link/50" /></td>
+                        <td className="px-6 py-3"><input {...editForm.register('description')} className="w-full bg-white border border-border rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-link/50" /></td>
+                        <td className="px-6 py-3 text-right flex items-center justify-end gap-1">
+                          <button onClick={editForm.handleSubmit(onUpdate)} className="p-2 text-charcoal hover:bg-secondary rounded-md" title="Save"><Check className="size-5" /></button>
+                          <button onClick={() => setEditingId(null)} className="p-2 text-mid-gray hover:bg-secondary rounded-md" title="Cancel"><X className="size-5" /></button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-6 py-5 font-display font-bold tracking-wider text-charcoal uppercase">{cat.code}</td>
+                        <td className="px-6 py-5 font-semibold text-charcoal">{cat.name}</td>
+                        <td className="px-6 py-5 text-mid-gray font-light italic">{cat.description || '-'}</td>
+                        <td className="px-6 py-5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => startEditing(cat)} className="p-2 text-mid-gray hover:text-charcoal hover:bg-secondary rounded-md transition-all"><Edit2 className="size-4" /></button>
+                            <button onClick={() => onDelete(cat.id, cat.name)} className="p-2 text-mid-gray hover:text-destructive hover:bg-destructive/5 rounded-md transition-all"><Trash2 className="size-4" /></button>
+                          </div>
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </PageContainer>
   )
 }

@@ -32,7 +32,7 @@ export function EditDrawer({ isOpen, onClose, title, children }: EditDrawerProps
       />
       
       {/* Drawer Content */}
-      <div className="relative w-full max-w-md bg-white h-full shadow-2xl animate-fade-left border-l border-border-light flex flex-col">
+      <div className="relative w-full max-w-md bg-white h-full animate-fade-left border-l border-border-light flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-border-light">
           <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
           <button 

@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { DM_Sans, Geist } from "next/font/google";
+import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-// Google Sans is propriety, so DM_Sans is the exact open-source geometric equivalent on next/font/google!
-const googleSans = DM_Sans({
-  variable: "--font-google-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const calSans = localFont({
+  src: "../node_modules/cal-sans/fonts/webfonts/CalSans-SemiBold.woff2",
+  variable: "--font-cal-sans",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -16,9 +22,6 @@ export const metadata: Metadata = {
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -27,12 +30,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", googleSans.variable, "font-sans", geist.variable)}
+      className={cn("h-full antialiased", inter.variable, calSans.variable, "font-sans")}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-white">
         <ToastProvider />
         {children}
       </body>
     </html>
   );
 }
+

@@ -11,6 +11,7 @@ import { MapPin, Plus, ChevronRight, Edit2, Trash2, Home, ChevronLeft, Info, Sea
 import { toast } from 'react-hot-toast'
 import { PageContainer } from '@/components/ui/PageContainer'
 import { PageHeader } from '@/components/ui/PageHeader'
+import Link from 'next/link'
 
 const locationSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -24,7 +25,7 @@ export default function StorageLocationsPage() {
   const supabase = createClient()
   
   const [allLocations, setAllLocations] = useState<any[]>([])
-  const [currentPath, setCurrentPath] = useState<any[]>([]) // Breadcrumbs
+  const [currentPath, setCurrentPath] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -92,7 +93,6 @@ export default function StorageLocationsPage() {
     if (!confirm(`Delete location "${name}"?`)) return
     
     startTransition(async () => {
-      // 1. Check for child locations
       const { count: childCount } = await supabase
         .from('storage_locations')
         .select('*', { count: 'exact', head: true })
@@ -103,7 +103,6 @@ export default function StorageLocationsPage() {
         return
       }
 
-      // 2. Check for assets
       const { count: assetCount } = await supabase
         .from('assets')
         .select('*', { count: 'exact', head: true })
@@ -137,12 +136,9 @@ export default function StorageLocationsPage() {
     }
   }
 
-  // Filtering
   const filteredLocations = allLocations.filter(loc => {
     const parentMatches = loc.parent_id === currentParentId
     const searchMatches = searchQuery ? loc.name.toLowerCase().includes(searchQuery.toLowerCase()) : true
-    
-    // If searching, ignore hierarchy and show all matches
     if (searchQuery) return searchMatches
     return parentMatches
   })
@@ -157,148 +153,146 @@ export default function StorageLocationsPage() {
 
   return (
     <PageContainer>
-      <PageHeader 
-        label="Logistics"
-        title="Storage Layout"
-        subtitle="Design your warehouse topography and bin systems."
-        actions={
-          <Link 
-            href="/inv" 
-            className="inline-flex items-center text-xs font-bold text-text-tertiary hover:text-action-primary uppercase tracking-widest transition-colors group"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-            Dashboard
-          </Link>
-        }
-      />
+      <div className="mb-12">
+        <Link 
+          href="/inv" 
+          className="inline-flex items-center text-xs font-semibold text-mid-gray hover:text-charcoal uppercase tracking-widest transition-colors mb-4 group"
+        >
+          <ChevronLeft className="size-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+          Dashboard
+        </Link>
+        <PageHeader 
+          label="Logistics"
+          title="Storage Layout"
+          subtitle="Design your warehouse topography and bin systems."
+          className="!mb-0 !items-start !text-left"
+        />
+      </div>
 
-      <div className="space-y-12">
-
-      {/* Topography Navigator */}
-      <div className="flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-16">
         
-        {/* Left: Navigator List */}
-        <div className="flex-[2] space-y-6">
-          <div className="p-4 bg-surface-warm border border-border-light rounded-2xl flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-hidden">
+        {/* Navigator Section */}
+        <div className="flex-[2] space-y-8">
+          <div className="p-4 bg-secondary/30 border border-border rounded-lg flex items-center justify-between gap-4">
+            <div className="flex items-center gap-1 overflow-hidden">
               <button 
                 onClick={() => goToBreadcrumb(-1)}
-                className={`p-2 rounded-lg hover:bg-white transition-colors ${currentPath.length === 0 ? 'text-action-primary font-bold' : 'text-text-tertiary'}`}
+                className={`p-2 rounded-md hover:bg-white transition-all ${currentPath.length === 0 ? 'text-charcoal bg-white border border-border' : 'text-mid-gray'}`}
               >
-                <Home className="w-4 h-4" />
+                <Home className="size-4" />
               </button>
               {currentPath.map((loc, i) => (
-                <div key={loc.id} className="flex items-center gap-2 flex-shrink-0">
-                  <ChevronRight className="w-3 h-3 text-text-tertiary" />
+                <div key={loc.id} className="flex items-center gap-1 flex-shrink-0">
+                  <ChevronRight className="size-3 text-border" />
                   <button 
                     onClick={() => goToBreadcrumb(i)}
-                    className={`text-xs font-bold whitespace-nowrap px-2 py-1 rounded-md transition-all ${i === currentPath.length - 1 ? 'bg-white text-text-primary border border-border-light shadow-sm' : 'text-text-tertiary hover:text-text-primary'}`}
+                    className={`text-xs font-semibold whitespace-nowrap px-3 py-1.5 rounded-md transition-all ${i === currentPath.length - 1 ? 'bg-white text-charcoal border border-border' : 'text-mid-gray hover:text-charcoal'}`}
                   >
                     {loc.name}
                   </button>
                 </div>
               ))}
             </div>
-            <div className="relative w-full md:w-48">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
+            <div className="relative w-full md:w-64">
+              <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-mid-gray" />
               <input 
-                placeholder="Search..." 
-                className="w-full bg-white border border-border-light rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-action-primary outline-none transition-all"
+                placeholder="Find a location..." 
+                className="w-full bg-white border border-border rounded-md pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-charcoal/20 outline-none transition-all"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredLocations.length > 0 ? (
               filteredLocations.map((loc) => (
                 <div 
                   key={loc.id}
-                  className="group flex flex-col p-5 bg-white border border-border-light rounded-2xl hover:border-action-primary transition-all hover:bg-surface-warm/30 shadow-none cursor-default"
+                  className="group flex flex-col p-6 bg-white border border-border rounded-lg transition-all"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-2.5 bg-surface-warm rounded-xl text-text-secondary group-hover:text-action-primary group-hover:bg-white border border-transparent group-hover:border-border-light transition-all">
-                      <MapPin className="w-5 h-5" />
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="p-3 bg-secondary rounded-md text-charcoal transition-all">
+                      <MapPin className="size-5" />
                     </div>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => startEditing(loc)} className="p-2 text-text-tertiary hover:text-text-primary rounded-lg transition-all"><Edit2 className="w-4 h-4" /></button>
-                      <button onClick={() => onDelete(loc.id, loc.name)} className="p-2 text-text-tertiary hover:text-error rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => startEditing(loc)} className="p-2 text-mid-gray hover:text-charcoal hover:bg-secondary rounded-md transition-all"><Edit2 className="size-4" /></button>
+                      <button onClick={() => onDelete(loc.id, loc.name)} className="p-2 text-mid-gray hover:text-destructive hover:bg-destructive/5 rounded-md transition-all"><Trash2 className="size-4" /></button>
                     </div>
                   </div>
                   
                   {editingId === loc.id ? (
-                    <div className="space-y-3">
-                      <input {...editForm.register('name')} className="w-full bg-surface-warm border border-border-light rounded px-2 py-1.5 text-sm outline-none focus:border-border-focus" />
+                    <div className="space-y-4">
+                      <input {...editForm.register('name')} className="w-full bg-white border border-border rounded px-3 py-2 text-sm font-semibold outline-none focus:ring-1 focus:ring-charcoal/20" />
                       <div className="flex gap-2">
-                        <Button onClick={editForm.handleSubmit(onUpdate)} className="h-8 text-[10px] flex-1">Save</Button>
-                        <Button variant="secondary" onClick={() => setEditingId(null)} className="h-8 text-[10px] flex-1">Cancel</Button>
+                        <Button onClick={editForm.handleSubmit(onUpdate)} className="h-9 text-xs flex-1">Save</Button>
+                        <Button variant="ghost" onClick={() => setEditingId(null)} className="h-9 text-xs flex-1">Cancel</Button>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-1">
-                      <h3 className="font-bold text-text-primary group-hover:text-action-primary transition-colors">{loc.name}</h3>
-                      <p className="text-xs text-text-tertiary line-clamp-1">{loc.description || 'No description'}</p>
+                    <div className="space-y-2">
+                      <h3 className="font-display font-semibold text-lg text-charcoal">{loc.name}</h3>
+                      <p className="text-xs text-mid-gray font-light line-clamp-1 italic">{loc.description || 'No description provided'}</p>
                     </div>
                   )}
 
                   {!searchQuery && !editingId && (
                     <button 
                       onClick={() => drillDown(loc)}
-                      className="mt-6 flex items-center text-[10px] font-bold text-text-tertiary uppercase tracking-widest hover:text-action-primary transition-colors"
+                      className="mt-8 flex items-center text-[10px] font-bold text-mid-gray uppercase tracking-widest hover:text-charcoal transition-colors group/btn"
                     >
                       Explore Zone
-                      <ChevronRight className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight className="size-3 ml-2 group-hover/btn:translate-x-1 transition-transform" />
                     </button>
                   )}
                 </div>
               ))
             ) : (
-              <div className="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-4 bg-surface-warm/20 border border-dashed border-border-light rounded-3xl animate-pulse">
-                <MapPin className="w-10 h-10 text-text-tertiary opacity-30" />
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-text-secondary">No Locations Found</p>
-                  <p className="text-xs text-text-tertiary">Start building your warehouse map.</p>
+              <div className="col-span-full py-24 flex flex-col items-center justify-center text-center space-y-6 bg-white border border-dashed border-border rounded-lg">
+                <MapPin className="size-12 text-border" />
+                <div className="space-y-2">
+                  <p className="text-base font-display font-semibold text-charcoal">Terminal Location</p>
+                  <p className="text-sm text-mid-gray font-light">No nested sub-zones found at this level.</p>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right: Add New Location */}
-        <div className="flex-1 space-y-6">
-          <div className="p-8 bg-white border border-border-light rounded-3xl space-y-6 shadow-none">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <Plus className="w-5 h-5 text-action-primary" />
-                Register Room/Bin
+        {/* Action Sidebar */}
+        <aside className="lg:w-80 space-y-8">
+          <div className="p-8 bg-white border border-border rounded-lg space-y-8">
+            <div className="space-y-2">
+              <h2 className="text-xl font-display font-semibold flex items-center gap-3 text-charcoal">
+                <Plus className="size-5" />
+                Add Room
               </h2>
-              <p className="text-xs text-text-tertiary">
+              <p className="text-xs text-mid-gray leading-relaxed font-light">
                 {currentParentId 
-                  ? `This position will be nested inside ${currentPath[currentPath.length - 1].name}`
-                  : 'This will be a top-level warehouse or room.'}
+                  ? `This position will be nested inside "${currentPath[currentPath.length - 1].name}"`
+                  : 'Specify a new top-level facility or global warehouse boundary.'}
               </p>
             </div>
 
-            <form onSubmit={createForm.handleSubmit(onCreate)} className="space-y-4">
-              <Input label="Placement Name" placeholder="e.g. Rack A-1 or Bin 102" {...createForm.register('name')} error={createForm.formState.errors.name?.message} />
-              <Input label="Notes" placeholder="e.g. Locked cabinet, sensitive gear..." {...createForm.register('description')} />
+            <form onSubmit={createForm.handleSubmit(onCreate)} className="space-y-6">
+              <Input label="Name / Label" placeholder="e.g. Rack A-1" {...createForm.register('name')} error={createForm.formState.errors.name?.message} />
+              <Input label="Description" placeholder="Optional notes..." {...createForm.register('description')} />
               
-              <div className="pt-2">
-                <Button isLoading={isPending} type="submit" className="w-full font-bold">Register Location</Button>
-              </div>
+              <Button isLoading={isPending} type="submit" className="w-full h-11">
+                Register Location
+              </Button>
             </form>
 
-            <div className="pt-4 border-t border-border-light flex gap-3 text-text-tertiary">
-              <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <p className="text-[10px] leading-relaxed">
-                Use hierarchical naming for best results. Top-level should be Rooms/Warehouses, inner-levels should be Shelves or Bins.
+            <div className="pt-6 border-t border-border flex gap-4 text-mid-gray">
+              <Info className="size-4 flex-shrink-0 mt-1" />
+              <p className="text-[11px] leading-relaxed font-light">
+                Logistics Tip: Use a "Parent &gt; Child" hierarchy for better organizational clarity.
               </p>
             </div>
           </div>
-        </div>
-
+        </aside>
       </div>
     </PageContainer>
   )
 }
+

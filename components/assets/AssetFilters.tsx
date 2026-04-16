@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useCallback } from 'react'
-import { ListFilter } from 'lucide-react'
+import { ListFilter, ChevronDown } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-// This would normally be fetched from DB, but for MVP we take them as props
 interface AssetFiltersProps {
   categories: { id: string, name: string }[]
   subcategories: { id: string, name: string }[]
@@ -28,45 +28,45 @@ export function AssetFilters({ categories, subcategories, models, locations }: A
       } else {
         params.set(name, value)
       }
-      params.delete('page') // Reset page
+      params.delete('page')
       router.push(pathname + '?' + params.toString())
     },
     [searchParams, pathname, router]
   )
 
   const Select = ({ label, name, options, valueKey = 'id', labelKey = 'name', currentValue }: any) => (
-    <div className="space-y-1.5 flex-1 min-w-[150px]">
-      <label className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block">
+    <div className="space-y-1.5 flex-1 min-w-[160px]">
+      <label className="text-[11px] font-bold text-mid-gray uppercase tracking-widest block ml-0.5">
         {label}
       </label>
-      <select
-        value={currentValue || 'ALL'}
-        onChange={(e) => handleFilterChange(name, e.target.value)}
-        className="w-full appearance-none py-2 px-3 bg-background border border-border-light rounded-lg text-sm text-text-primary outline-none focus:border-border-focus focus:ring-4 focus:ring-surface-input transition-all cursor-pointer"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 12px center',
-          paddingRight: '36px'
-        }}
-      >
-        <option value="ALL">All {label}s</option>
-        {options.map((opt: any) => (
-          <option key={opt[valueKey] || opt} value={opt[valueKey] || opt}>
-            {opt[labelKey] || opt}
-          </option>
-        ))}
-      </select>
+      <div className="relative group">
+        <select
+          value={currentValue || 'ALL'}
+          onChange={(e) => handleFilterChange(name, e.target.value)}
+          className={cn(
+            "w-full appearance-none h-10 px-4 pr-10 bg-white border border-border rounded-md text-sm text-charcoal outline-none transition-all",
+            "focus:border-charcoal/20 focus:ring-4 focus:ring-charcoal/5 cursor-pointer font-sans"
+          )}
+        >
+          <option value="ALL">All {label}s</option>
+          {options.map((opt: any) => (
+            <option key={opt[valueKey] || opt} value={opt[valueKey] || opt}>
+              {opt[labelKey] || opt}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-mid-gray pointer-events-none group-focus-within:text-charcoal transition-colors" />
+      </div>
     </div>
   )
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-text-secondary">
-        <ListFilter className="w-4 h-4" />
-        <span className="text-sm font-medium">Filters</span>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 text-mid-gray">
+        <ListFilter className="size-4" />
+        <span className="text-xs font-bold uppercase tracking-[0.2em]">Refine Catalog</span>
       </div>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-6">
         <Select label="Category" name="category" options={categories} currentValue={searchParams.get('category')} />
         <Select label="Subcategory" name="subcategory" options={subcategories} currentValue={searchParams.get('subcategory')} />
         <Select label="Model" name="model" options={models} currentValue={searchParams.get('model')} />
@@ -77,3 +77,4 @@ export function AssetFilters({ categories, subcategories, models, locations }: A
     </div>
   )
 }
+

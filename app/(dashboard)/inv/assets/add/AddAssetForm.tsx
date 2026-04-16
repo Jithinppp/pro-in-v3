@@ -10,10 +10,12 @@ import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { addAssets } from './actions'
 import { createClient } from '@/lib/supabase/client'
-import { ArrowLeft, Info, Layers, Package, Sparkles, Clock, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Info, Layers, Package, Sparkles, Clock, ShieldCheck, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { PageContainer } from '@/components/ui/PageContainer'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { cn } from '@/lib/utils'
+import { toast } from 'react-hot-toast'
 
 const assetSchema = z.object({
   model_id: z.string().min(1, 'Model is required'),
@@ -45,7 +47,6 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  // Selection State
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('')
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('')
   const [nextSequence, setNextSequence] = useState<number>(1)
@@ -69,7 +70,6 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
 
   const modelId = watch('model_id')
 
-  // Filtered Lists
   const filteredSubcategories = useMemo(() => 
     subcategories.filter(s => s.category_id === selectedCategoryId),
   [selectedCategoryId, subcategories])
@@ -78,7 +78,6 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
     models.filter(m => m.subcategory_id === selectedSubcategoryId),
   [selectedSubcategoryId, models])
 
-  // Get Code Prefix
   const codePrefix = useMemo(() => {
     if (!selectedCategoryId || !selectedSubcategoryId || !modelId) return ''
     const cat = categories.find(c => c.id === selectedCategoryId)
@@ -88,7 +87,6 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
     return `${cat.code}-${sub.code}-${mod.code}-`
   }, [selectedCategoryId, selectedSubcategoryId, modelId, categories, subcategories, models])
 
-  // Calculate Next Sequence from DB
   useEffect(() => {
     const fetchLastSequence = async () => {
       if (!codePrefix) {
@@ -115,7 +113,6 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
           setNextSequence(1)
         }
       } catch (err) {
-        console.error('Sequence fetch failed', err)
         setNextSequence(1)
       } finally {
         setIsGenerating(false)
@@ -125,7 +122,6 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
     fetchLastSequence()
   }, [codePrefix, supabase, setValue])
 
-  // Update Display Code
   useEffect(() => {
     if (codePrefix) {
       const formattedSeq = nextSequence.toString().padStart(4, '0')
@@ -146,7 +142,6 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
 
   const onSubmit = async (values: AssetFormValues) => {
     setError(null)
-    
     if (!values.asset_code) {
       setError('System could not generate a code. Please select a Model.')
       return
@@ -158,12 +153,9 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
     }]
 
     startTransition(async () => {
-      const result = await addAssets({
-        ...values,
-        items
-      })
-
+      const result = await addAssets({ ...values, items })
       if (result.success) {
+        toast.success('Asset successfully registered')
         router.push('/inv/assets')
         router.refresh()
       } else {
@@ -174,230 +166,168 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
 
   return (
     <PageContainer>
-      <PageHeader 
-        label="Registration"
-        title="Register Single Asset"
-        subtitle="Assign a unique system ID to high-value equipment."
-        actions={
-          <Link href="/inv/assets" className="p-3 hover:bg-white border border-transparent hover:border-border-light rounded-2xl transition-all text-text-tertiary shadow-sm">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-        }
-      />
+      <div className="mb-12">
+        <Link 
+          href="/inv/assets" 
+          className="inline-flex items-center text-xs font-semibold text-mid-gray hover:text-charcoal uppercase tracking-widest transition-colors mb-4 group"
+        >
+          <ChevronLeft className="size-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+          Back to Inventory
+        </Link>
+        <PageHeader 
+          label="Registration"
+          title="Register Single Asset"
+          subtitle="Assign a unique system ID and track lifecycle data for high-value equipment."
+          className="!mb-0 !items-start !text-left"
+        />
+      </div>
 
       {error && (
-        <div className="p-4 bg-error/5 border border-error/20 rounded-2xl text-error text-sm font-medium flex items-center gap-3">
-          <Info className="w-5 h-5" />
+        <div className="mb-8 p-4 bg-destructive/5 border border-destructive/20 rounded-md text-destructive text-sm font-medium flex items-center gap-3">
+          <Info className="size-5" />
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
-        
-        {/* Left Column: Core Data */}
-        <div className="lg:col-span-12 xl:col-span-8 space-y-10">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           
-          {/* Section: Categorization */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 px-2">
-              <div className="h-6 w-1 bg-text-primary rounded-full"></div>
-              <h2 className="text-xs font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-                <Layers className="w-4 h-4" />
-                Categorization
-              </h2>
-            </div>
+          {/* Main Form Area */}
+          <div className="lg:col-span-8 space-y-16">
             
-            <div className="p-10 bg-white border border-border-light rounded-[32px] shadow-sm hover:shadow-md transition-shadow duration-300">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Select 
-                  label="1. Parent Category" 
-                  value={selectedCategoryId}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                  options={categories.map(c => ({ value: c.id, label: c.name }))}
-                />
-                <Select 
-                  label="2. Subcategory" 
-                  disabled={!selectedCategoryId}
-                  value={selectedSubcategoryId}
-                  onChange={(e) => handleSubcategoryChange(e.target.value)}
-                  options={filteredSubcategories.map(s => ({ value: s.id, label: s.name }))}
-                />
+            {/* Hierarchy Section */}
+            <section className="space-y-10">
+              <div className="flex items-center gap-4">
+                <h2 className="text-[10px] font-bold text-mid-gray uppercase tracking-[0.3em] whitespace-nowrap">Catalog Hierarchy</h2>
+                <div className="h-px w-full bg-border"></div>
               </div>
-
-              <div className="mt-8 pt-8 border-t border-border-light/50">
+              
+              <div className="p-10 bg-white border border-border rounded-lg space-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Select 
+                    label="Parent Category" 
+                    value={selectedCategoryId}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    options={categories.map(c => ({ value: c.id, label: c.name }))}
+                    className="h-11"
+                  />
+                  <Select 
+                    label="Subcategory" 
+                    disabled={!selectedCategoryId}
+                    value={selectedSubcategoryId}
+                    onChange={(e) => handleSubcategoryChange(e.target.value)}
+                    options={filteredSubcategories.map(s => ({ value: s.id, label: s.name }))}
+                    className="h-11"
+                  />
+                </div>
                 <Select 
-                  label="3. Target Product Model" 
+                  label="Target Product Model" 
                   disabled={!selectedSubcategoryId}
                   {...register('model_id')} 
                   options={filteredModels.map(m => ({ value: m.id, label: `${m.brand} ${m.name}` }))}
                   error={errors.model_id?.message}
+                  className="h-11"
                 />
               </div>
-            </div>
+            </section>
+
+            {/* Financials Section */}
+            <section className="space-y-10">
+              <div className="flex items-center gap-4">
+                <h2 className="text-[10px] font-bold text-mid-gray uppercase tracking-[0.3em] whitespace-nowrap">Lifecycle & Value</h2>
+                <div className="h-px w-full bg-border"></div>
+              </div>
+              
+              <div className="p-10 bg-white border border-border rounded-lg grid grid-cols-1 md:grid-cols-2 gap-10">
+                <Input label="Purchase Cost" type="number" step="0.01" placeholder="0.00" {...register('purchase_cost')} />
+                <Input label="Purchase Date" type="date" {...register('purchase_date')} />
+                <Input label="Warranty Expiry" type="date" {...register('warranty_expiry')} />
+                <Input label="Case / Rack ID" placeholder="e.g. CASE-42" {...register('case_number')} />
+              </div>
+            </section>
+
+            {/* Maintenance Section */}
+            <section className="space-y-10">
+              <div className="flex items-center gap-4">
+                <h2 className="text-[10px] font-bold text-mid-gray uppercase tracking-[0.3em] whitespace-nowrap">Maintenance Schedule</h2>
+                <div className="h-px w-full bg-border"></div>
+              </div>
+              
+              <div className="p-10 bg-white border border-border rounded-lg grid grid-cols-1 md:grid-cols-2 gap-10">
+                <Input label="Last Service" type="date" {...register('last_maintenance')} />
+                <Input label="Next Scheduled" type="date" {...register('next_maintenance')} />
+              </div>
+            </section>
           </div>
 
-          {/* Section: Financials & Lifecycle */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 px-2">
-              <div className="h-6 w-1 bg-text-primary rounded-full"></div>
-              <h2 className="text-xs font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                Financials & Lifecycle
-              </h2>
-            </div>
+          {/* Sidebar / Finalization */}
+          <aside className="lg:col-span-4 space-y-12">
             
-            <div className="p-10 bg-white border border-border-light rounded-[32px] shadow-sm hover:shadow-md transition-shadow duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Input 
-                  label="Purchase Cost" 
-                  type="number" 
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register('purchase_cost')}
-                  error={errors.purchase_cost?.message}
-                />
-                <Input 
-                  label="Purchase Date" 
-                  type="date" 
-                  {...register('purchase_date')}
-                  error={errors.purchase_date?.message}
-                />
-                <Input 
-                  label="Warranty Expiry" 
-                  type="date" 
-                  {...register('warranty_expiry')}
-                  error={errors.warranty_expiry?.message}
-                />
-                <Input 
-                  label="Case Number / Rack ID" 
-                  placeholder="e.g. CASE-42 or RACK-A1"
-                  {...register('case_number')}
-                  error={errors.case_number?.message}
-                />
+            <div className="p-8 bg-white border border-border rounded-lg space-y-10 sticky top-24">
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-charcoal flex items-center gap-2 uppercase tracking-widest">
+                  <Sparkles className="size-4" />
+                  System Identity
+                </h3>
+                <p className="text-xs text-mid-gray font-light">
+                  Required identifiers for physical tracking.
+                </p>
               </div>
-            </div>
-          </div>
 
-          {/* Section: Maintenance */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 px-2">
-              <div className="h-6 w-1 bg-text-primary rounded-full"></div>
-              <h2 className="text-xs font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Maintenance Schedule
-              </h2>
-            </div>
-            
-            <div className="p-10 bg-white border border-border-light rounded-[32px] shadow-sm hover:shadow-md transition-shadow duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Input 
-                  label="Last Maintenance Service" 
-                  type="date" 
-                  {...register('last_maintenance')}
-                  error={errors.last_maintenance?.message}
-                />
-                <Input 
-                  label="Next Scheduled Service" 
-                  type="date" 
-                  {...register('next_maintenance')}
-                  error={errors.next_maintenance?.message}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Identification & Status */}
-        <div className="lg:col-span-12 xl:col-span-4 space-y-10">
-          
-          <div className="space-y-6">
-             <div className="flex items-center gap-3 px-2">
-              <div className="h-6 w-1 bg-text-primary rounded-full"></div>
-              <h2 className="text-xs font-bold text-text-tertiary uppercase tracking-widest flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Identification
-              </h2>
-            </div>
-
-            <div className="p-8 bg-white border border-border-light rounded-[32px] shadow-sm space-y-8">
-               {/* System Generated Code Preview */}
-               <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <label className="text-[11px] font-bold text-text-tertiary uppercase tracking-widest">
-                    Generated Code
-                  </label>
-                  {isGenerating && <span className="text-[10px] text-action-primary animate-pulse font-bold">Syncing...</span>}
-                </div>
-                <div className="group relative">
-                  <Input 
-                    readOnly 
-                    {...register('asset_code')}
-                    className="bg-surface-warm/30 border-dashed border-border-light font-mono font-bold text-action-primary tracking-widest text-base py-4 text-center"
-                    placeholder="[SELECT MODEL]"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <Sparkles className={`w-5 h-5 text-action-primary/40 transition-opacity ${codePrefix ? 'opacity-100' : 'opacity-0'}`} />
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-mid-gray uppercase tracking-widest ml-1">Unique System Code</label>
+                  <div className="relative group">
+                    <input 
+                      readOnly 
+                      {...register('asset_code')}
+                      className={cn(
+                        "w-full h-14 bg-secondary border border-border rounded-md text-charcoal font-display font-bold text-xl text-center tracking-widest pr-4 outline-none transition-all"
+                      )}
+                      placeholder="----"
+                    />
+                    {isGenerating && <div className="absolute inset-0 bg-white/50 animate-pulse rounded-md" />}
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-6 pt-6 border-t border-border-light/50">
                 <Input 
                   label="Serial Number" 
-                  placeholder="Required for single assets" 
+                  placeholder="Required for single items" 
                   {...register('serial_number')}
                   error={errors.serial_number?.message}
+                  className="h-11"
                 />
+
                 <Select 
                   label="Storage Location" 
                   {...register('location_id')} 
                   options={locations.map(l => ({ value: l.id, label: l.name }))}
                   error={errors.location_id?.message}
+                  className="h-11"
                 />
+
                 <div className="grid grid-cols-2 gap-4">
-                   <Select 
-                    label="Initial Status" 
-                    {...register('status')} 
-                    options={[
-                      { value: 'AVAILABLE', label: 'Available' },
-                      { value: 'MAINTENANCE', label: 'Maintenance' },
-                      { value: 'OUT', label: 'Out' },
-                      { value: 'PENDING_QC', label: 'Pending QC' },
-                    ]}
-                  />
-                  <Select 
-                    label="Condition" 
-                    {...register('condition')} 
-                    options={[
-                      { value: 'EXCELLENT', label: 'Excellent' },
-                      { value: 'GOOD', label: 'Good' },
-                      { value: 'FAIR', label: 'Fair' },
-                      { value: 'POOR', label: 'Poor' },
-                    ]}
-                  />
+                  <Select label="Status" {...register('status')} options={[{ value: 'AVAILABLE', label: 'Available' }, { value: 'MAINTENANCE', label: 'Maintenance' }]} className="h-11" />
+                  <Select label="Condition" {...register('condition')} options={[{ value: 'EXCELLENT', label: 'Excellent' }, { value: 'GOOD', label: 'Good' }, { value: 'FAIR', label: 'Fair' }]} className="h-11" />
                 </div>
               </div>
 
-              <div className="p-5 bg-surface-warm rounded-2xl border border-border-light flex gap-4">
-                <Info className="w-5 h-5 text-text-tertiary flex-shrink-0 mt-0.5" />
-                <p className="text-[11px] text-text-tertiary leading-relaxed font-medium">
-                  Registration will create a unique physical record. Ensure serial numbers match the physical unit.
+              <div className="pt-6 border-t border-border flex gap-4 text-mid-gray italic">
+                <Info className="size-4 flex-shrink-0 mt-1" />
+                <p className="text-[10px] leading-relaxed font-light">
+                  Once registered, this asset will be live and searchable in the global database.
                 </p>
               </div>
-            </div>
-          </div>
 
-          <div className="pt-6">
-            <Button isLoading={isPending} type="submit" size="xl" className="w-full">
-              Complete Registration
-            </Button>
-            <Link href="/inv/assets" className="block text-center mt-4 text-xs font-bold text-text-tertiary uppercase tracking-widest hover:text-text-primary transition-colors">
-              Cancel and Return
-            </Link>
-          </div>
+              <Button isLoading={isPending} type="submit" className="w-full h-12">
+                Register Record
+              </Button>
+            </div>
+          </aside>
 
         </div>
       </form>
     </PageContainer>
   )
 }
+

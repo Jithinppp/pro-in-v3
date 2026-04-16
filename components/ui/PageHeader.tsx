@@ -16,17 +16,14 @@ export function PageHeader({
   className = '' 
 }: PageHeaderProps) {
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 ${className}`}>
-      <div className="space-y-4">
-        <div className="inline-flex items-center px-3 py-1 bg-white border border-border-light rounded-full text-[10px] font-bold text-text-secondary uppercase tracking-widest shadow-sm">
-          {label}
-        </div>
-        <div className="space-y-1.5">
-          <h1 className="text-4xl font-semibold tracking-tight text-text-primary">
+    <div className={`flex flex-col items-center text-center space-y-6 mb-20 ${className}`}>
+      <div className="flex flex-col items-center">
+        <div className="space-y-3">
+          <h1 className="text-4xl md:text-5xl font-display font-semibold tracking-tight text-charcoal">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-text-secondary text-base font-medium">
+            <p className="text-mid-gray text-lg font-light max-w-2xl mx-auto">
               {subtitle}
             </p>
           )}
@@ -34,10 +31,11 @@ export function PageHeader({
       </div>
       
       {actions && (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4 pt-2">
           {actions}
         </div>
       )}
     </div>
   )
 }
+

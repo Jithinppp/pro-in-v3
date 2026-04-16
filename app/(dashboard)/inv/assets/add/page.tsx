@@ -4,7 +4,6 @@ import { AddAssetForm } from './AddAssetForm'
 export default async function AddAssetPage() {
   const supabase = await createClient()
 
-  // Fetch full hierarchy (including codes) and locations for the form
   const [
     { data: categories },
     { data: subcategories },
@@ -18,13 +17,12 @@ export default async function AddAssetPage() {
   ])
 
   return (
-    <div className="max-w-[1000px] mx-auto pb-20">
-      <AddAssetForm 
-        categories={categories || []}
-        subcategories={subcategories || []}
-        models={models || []} 
-        locations={locations || []} 
-      />
-    </div>
+    <AddAssetForm 
+      categories={categories || []}
+      subcategories={subcategories || []}
+      models={models || []} 
+      locations={locations || []} 
+    />
   )
 }
+

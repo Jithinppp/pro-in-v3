@@ -1,28 +1,37 @@
 import Link from 'next/link'
 import { LucideIcon } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export interface QuickActionCardProps {
   title: string
   desc: string
   icon: LucideIcon
   href: string
+  className?: string
 }
 
-export function QuickActionCard({ title, desc, icon: Icon, href }: QuickActionCardProps) {
+export function QuickActionCard({ title, desc, icon: Icon, href, className }: QuickActionCardProps) {
   return (
     <Link 
       href={href} 
-      className="group flex flex-col items-center justify-center p-4 sm:p-6 bg-background border border-border-light rounded-2xl sm:rounded-3xl hover:border-border-focus transition-all hover:-translate-y-1 h-auto sm:h-52 text-center"
+      className={cn(
+        "group flex flex-col items-start p-6 bg-white border border-border rounded-lg transition-all hover:border-charcoal/10",
+        "h-auto text-left space-y-4",
+        className
+      )}
     >
-      <div className="p-3 sm:p-4 rounded-2xl bg-surface-warm group-hover:bg-border-light transition-colors mb-3 sm:mb-4">
-        <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-text-secondary" strokeWidth={1.5} />
+      <div className="p-3 rounded-md bg-secondary text-charcoal transition-all">
+        <Icon className="size-6" strokeWidth={2} />
       </div>
-      <span className="text-[13px] sm:text-base font-semibold text-text-primary leading-tight px-1 line-clamp-2">
-        {title}
-      </span>
-      <span className="hidden sm:block text-xs text-text-tertiary mt-2">
-        {desc}
-      </span>
+      <div className="space-y-1.5">
+        <span className="text-sm font-display font-semibold text-charcoal leading-tight block">
+          {title}
+        </span>
+        <span className="text-[11px] text-mid-gray leading-relaxed font-light block">
+          {desc}
+        </span>
+      </div>
     </Link>
   )
 }
+
