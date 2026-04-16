@@ -134,7 +134,7 @@ export default function CategoriesPage() {
           label="Catalog Portal"
           title="Category Manager"
           subtitle="Define top-level gear taxonomy groups and codes."
-          className="!mb-0 !items-start !text-left"
+          className="mb-0! items-start! text-left!"
         />
       </div>
 

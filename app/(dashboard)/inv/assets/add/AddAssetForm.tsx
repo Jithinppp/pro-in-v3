@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useForm, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Input } from '@/components/ui/Input'
@@ -20,8 +20,8 @@ import { toast } from 'react-hot-toast'
 const assetSchema = z.object({
   model_id: z.string().min(1, 'Model is required'),
   location_id: z.string().min(1, 'Location is required'),
-  status: z.string().min(1, 'Status is required').default('AVAILABLE'),
-  condition: z.string().min(1, 'Condition is required').default('EXCELLENT'),
+  status: z.string().min(1, 'Status is required'),
+  condition: z.string().min(1, 'Condition is required'),
   asset_code: z.string().optional(),
   serial_number: z.string().optional(),
   case_number: z.string().optional(),
@@ -59,7 +59,7 @@ export function AddAssetForm({ categories, subcategories, models, locations }: A
     watch,
     formState: { errors },
   } = useForm<AssetFormValues>({
-    resolver: zodResolver(assetSchema),
+    resolver: zodResolver(assetSchema) as Resolver<AssetFormValues>,
     defaultValues: {
       status: 'AVAILABLE',
       condition: 'EXCELLENT',

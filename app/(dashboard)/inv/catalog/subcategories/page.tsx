@@ -178,7 +178,7 @@ export default function SubcategoriesPage() {
           label="Catalog Portal"
           title="Subcategory Manager"
           subtitle="Organize system types within categories."
-          className="!mb-0 !items-start !text-left"
+          className="mb-0! items-start! text-left!"
         />
       </div>
 

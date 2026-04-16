@@ -22,6 +22,25 @@ import {
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
+interface Category {
+  id: string
+  name: string
+}
+
+interface Subcategory {
+  id: string
+  name: string
+  category_id: string
+}
+
+interface Model {
+  id: string
+  name: string
+  brand: string
+  code: string
+  subcategory_id: string
+}
+
 const modelSchema = z.object({
   brand: z.string().min(1, "Brand is required"),
   name: z.string().min(1, "Name is required"),
@@ -34,10 +53,10 @@ export default function ModelsPage() {
   const [isPending, startTransition] = useTransition();
   const supabase = createClient();
 
-  const [categories, setCategories] = useState<any[]>([]);
-  const [subcategories, setSubcategories] = useState<any[]>([]);
-  const [models, setModels] = useState<any[]>([]);
-  const [editingModel, setEditingModel] = useState<any | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [editingModel, setEditingModel] = useState<Model | null>(null);
 
   // Instant selection state (No URL dependency)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
@@ -67,7 +86,7 @@ export default function ModelsPage() {
       setSubcategories(subData || []);
     };
     fetchBaseData();
-  }, []);
+  }, [supabase]);
 
   // Load Models when Selection Changes
   useEffect(() => {
@@ -84,7 +103,7 @@ export default function ModelsPage() {
       setModels(data || []);
     };
     fetchModels();
-  }, [selectedSubcategoryId]);
+  }, [selectedSubcategoryId, supabase]);
 
   useEffect(() => {
     if (editingModel) {
@@ -205,13 +224,13 @@ export default function ModelsPage() {
           label="Catalog Portal"
           title="Equipment Models"
           subtitle="Manage specific hardware specifications."
-          className="!mb-0 !items-start !text-left"
+          className="mb-0! items-start! text-left!"
         />
       </div>
 
       {/* Selectors - INSTANT STATE */}
       <section className="p-6 bg-surface-warm border border-border-light rounded-2xl flex flex-col md:flex-row items-center gap-6 mb-12">
-        <div className="flex-1 space-y-1.5 min-w-[200px]">
+        <div className="flex-1 space-y-1.5 min-w-50">
           <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">
             1. Category
           </h3>
@@ -223,7 +242,7 @@ export default function ModelsPage() {
         </div>
         <div className="w-10 h-px bg-border-light hidden md:block mt-6" />
         <div
-          className={`flex-1 space-y-1.5 min-w-[200px] transition-opacity ${!selectedCategoryId ? "opacity-30" : "opacity-100"}`}
+          className={`flex-1 space-y-1.5 min-w-50 transition-opacity ${!selectedCategoryId ? "opacity-30" : "opacity-100"}`}
         >
           <h3 className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">
             2. Subcategory
