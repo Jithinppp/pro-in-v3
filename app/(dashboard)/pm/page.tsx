@@ -5,27 +5,27 @@ export default function PmDashboard() {
   return (
     <div className="space-y-16 pb-24 animate-fade-up">
       <div className="space-y-6">
-        <div className="inline-flex items-center px-3 py-1 bg-white border border-border-light rounded-full text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+        <div className="inline-flex items-center px-3 py-1 bg-white border border-border rounded-full text-[10px] font-bold text-mid-gray uppercase tracking-widest">
           Dashboard
         </div>
         <div className="space-y-2">
-          <h1 className="text-5xl font-semibold tracking-tight text-text-primary flex items-center gap-3">
+          <h1 className="text-5xl font-semibold tracking-tight text-charcoal flex items-center gap-3">
             Hi Project Manager <span className="text-3xl">👋</span>
           </h1>
-          <p className="text-text-secondary text-lg">Manage your AV productions</p>
+          <p className="text-mid-gray text-lg">Manage your AV productions</p>
         </div>
       </div>
 
       <div className="space-y-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="relative overflow-hidden p-8 rounded-3xl bg-background border border-border-light">
+          <div className="relative overflow-hidden p-8 rounded-3xl bg-white border border-border">
             <div className="flex items-start justify-between mb-8">
-              <div className="p-3 rounded-2xl bg-surface-warm">
-                <FolderKanban className="w-6 h-6 text-text-secondary" strokeWidth={1.5} />
+              <div className="p-3 rounded-2xl bg-secondary">
+                <FolderKanban className="w-6 h-6 text-charcoal" strokeWidth={1.5} />
               </div>
             </div>
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-widest mb-2 text-text-secondary">Active Projects</p>
+              <p className="text-[11px] font-medium uppercase tracking-widest mb-2 text-mid-gray">Active Projects</p>
               <p className="text-4xl font-semibold tracking-tight tabular-nums">0</p>
             </div>
           </div>
@@ -33,8 +33,8 @@ export default function PmDashboard() {
 
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <div className="h-px w-10 bg-border-focus"></div>
-            <span className="text-xs font-medium text-text-tertiary uppercase tracking-widest">Quick Actions</span>
+            <div className="h-px w-10 bg-border"></div>
+            <span className="text-xs font-medium text-mid-gray uppercase tracking-widest">Quick Actions</span>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

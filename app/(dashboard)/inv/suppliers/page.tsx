@@ -26,20 +26,25 @@ const supplierSchema = z.object({
 
 type SupplierFormValues = z.infer<typeof supplierSchema>
 
+interface Supplier extends SupplierFormValues {
+  id: string;
+  created_at: string;
+}
+
 export default function SuppliersPage() {
   const [isPending, startTransition] = useTransition()
   const supabase = createClient()
   
-  const [suppliers, setSuppliers] = useState<any[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const createForm = useForm<SupplierFormValues>({
-    resolver: zodResolver(supplierSchema),
+    resolver: zodResolver(supplierSchema) as any,
   })
 
   const editForm = useForm<SupplierFormValues>({
-    resolver: zodResolver(supplierSchema),
+    resolver: zodResolver(supplierSchema) as any,
   })
 
   const fetchSuppliers = async () => {
@@ -108,7 +113,7 @@ export default function SuppliersPage() {
     })
   }
 
-  const startEditing = (sup: any) => {
+  const startEditing = (sup: Supplier) => {
     setEditingId(sup.id)
     editForm.reset({
       name: sup.name,

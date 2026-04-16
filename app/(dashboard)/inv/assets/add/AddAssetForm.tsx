@@ -26,7 +26,7 @@ const assetSchema = z.object({
   serial_number: z.string().optional(),
   case_number: z.string().optional(),
   purchase_date: z.string().optional(),
-  purchase_cost: z.preprocess((val) => (val === '' ? undefined : val), z.coerce.number().optional()),
+  purchase_cost: z.coerce.number().optional(),
   warranty_expiry: z.string().optional(),
   last_maintenance: z.string().optional(),
   next_maintenance: z.string().optional(),
@@ -64,7 +64,7 @@ export function AddAssetForm({ categories, subcategories, models, locations, sup
     watch,
     formState: { errors },
   } = useForm<AssetFormValues>({
-    resolver: zodResolver(assetSchema),
+    resolver: zodResolver(assetSchema) as any,
     defaultValues: {
       status: 'AVAILABLE',
       condition: 'EXCELLENT',

@@ -22,6 +22,11 @@ export async function addAssets(formData: {
 }) {
   const supabase = await createClient()
 
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, error: 'Unauthorized: You must be logged in to add assets' }
+  }
+
   const { data, error } = await supabase
     .from('assets')
     .insert(
