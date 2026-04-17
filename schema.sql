@@ -210,3 +210,70 @@ CREATE TABLE public.activity_log (
     new_value text,
     created_at timestamptz DEFAULT now()
 );
+
+
+-- RLS Policies
+--1. Enable RLS on all tables
+DO $$ 
+DECLARE 
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') 
+    LOOP
+        EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' ENABLE ROW LEVEL SECURITY;';
+    END LOOP; -- Corrected syntax: space between END and LOOP
+END $$;
+
+-- Role Helper Functions
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS user_role AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean AS $$
+  SELECT role = 'ADMIN' FROM public.profiles WHERE id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+
+
+--2. RLS for all the tables based on the roles
+-- PROFILES
+CREATE POLICY "Profiles: Users view own" ON public.profiles FOR SELECT TO authenticated USING (auth.uid() = id);
+CREATE POLICY "Profiles: Users update own" ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
+CREATE POLICY "Profiles: Admins full access" ON public.profiles TO authenticated USING (is_admin());
+
+-- CATALOG (Categories, Subcategories, Models)
+CREATE POLICY "Catalog: Read for all" ON public.categories FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Catalog: Read for all" ON public.subcategories FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Catalog: Read for all" ON public.models FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Catalog: INV/Admin manage" ON public.categories FOR ALL TO authenticated USING (get_my_role() IN ('INV', 'ADMIN'));
+CREATE POLICY "Catalog: INV/Admin manage" ON public.subcategories FOR ALL TO authenticated USING (get_my_role() IN ('INV', 'ADMIN'));
+CREATE POLICY "Catalog: INV/Admin manage" ON public.models FOR ALL TO authenticated USING (get_my_role() IN ('INV', 'ADMIN'));
+
+-- LOGISTICS (Suppliers, Venues, Locations)
+CREATE POLICY "Logistics: Read for all" ON public.suppliers FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Logistics: Read for all" ON public.venues FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Logistics: Read for all" ON public.storage_locations FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Logistics: Admin/INV/PM manage suppliers" ON public.suppliers FOR ALL TO authenticated USING (get_my_role() IN ('ADMIN', 'INV', 'PM'));
+CREATE POLICY "Logistics: Admin/INV/PM manage venues" ON public.venues FOR ALL TO authenticated USING (get_my_role() IN ('ADMIN', 'INV', 'PM'));
+CREATE POLICY "Logistics: Admin/INV manage locations" ON public.storage_locations FOR ALL TO authenticated USING (get_my_role() IN ('ADMIN', 'INV'));
+
+-- ASSETS & CONSUMABLES
+CREATE POLICY "Inventory: Read for all" ON public.assets FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Inventory: Read for all" ON public.consumables FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Inventory: INV and Admin manage" ON public.assets FOR ALL TO authenticated USING (get_my_role() IN ('INV', 'ADMIN'));
+CREATE POLICY "Inventory: Techs update status" ON public.assets FOR UPDATE TO authenticated 
+USING (get_my_role() = 'TECH') WITH CHECK (get_my_role() = 'TECH');
+
+-- PROJECTS
+CREATE POLICY "Projects: Read for all" ON public.projects FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Projects: Read for all" ON public.project_equipment FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Projects: PM and Admin manage" ON public.projects FOR ALL TO authenticated USING (get_my_role() IN ('PM', 'ADMIN'));
+CREATE POLICY "Projects: PM and Admin manage" ON public.project_equipment FOR ALL TO authenticated USING (get_my_role() IN ('PM', 'ADMIN'));
+
+-- MAINTENANCE & LOGS
+CREATE POLICY "Maint: Read for all" ON public.maintenance_logs FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Maint: Techs and above can create" ON public.maintenance_logs FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Maint: Admin/INV full control" ON public.maintenance_logs FOR ALL TO authenticated USING (get_my_role() IN ('ADMIN', 'INV'));
+CREATE POLICY "Logs: Users can insert" ON public.activity_log FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Logs: Admins view" ON public.activity_log FOR SELECT TO authenticated USING (is_admin());

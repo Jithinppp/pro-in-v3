@@ -9,12 +9,13 @@ const updateAssetSchema = z.object({
   location_id: z.string().optional(),
   status: z.string().optional(),
   condition: z.string().optional(),
+  serial_number: z.string().optional(),
   case_number: z.string().optional(),
-  purchase_date: z.string().optional(),
+  purchase_date: z.string().nullable().optional(),
   purchase_cost: z.coerce.number().optional(),
-  warranty_expiry: z.string().optional(),
-  last_maintenance: z.string().optional(),
-  next_maintenance: z.string().optional(),
+  warranty_expiry: z.string().nullable().optional(),
+  last_maintenance: z.string().nullable().optional(),
+  next_maintenance: z.string().nullable().optional(),
   description: z.string().optional(),
   weight: z.string().optional(),
   invoice_number: z.string().optional(),
@@ -52,9 +53,18 @@ export async function updateAsset(id: string, updates: any) {
 
   const validatedUpdates = updateAssetSchema.parse(updates)
   
+  const finalUpdates = { ...validatedUpdates }
+  const dateFields = ['purchase_date', 'warranty_expiry', 'last_maintenance', 'next_maintenance']
+  
+  dateFields.forEach(field => {
+    if (finalUpdates[field as keyof typeof finalUpdates] === '') {
+      (finalUpdates as any)[field] = null
+    }
+  })
+  
   const { error } = await supabase
     .from('assets')
-    .update(validatedUpdates)
+    .update(finalUpdates)
     .eq('id', id)
 
   if (error) {

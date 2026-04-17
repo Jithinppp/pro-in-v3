@@ -63,7 +63,7 @@ function LocationNode({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 transition-opacity">
           <button 
             onClick={() => onAddChild(location.id)} 
             className="p-1.5 text-mid-gray hover:text-charcoal hover:bg-white rounded transition-all"
@@ -300,7 +300,7 @@ export default function StorageLocationsPage() {
                   <Input label="Name / Label" placeholder="e.g. Rack A-1" {...editForm.register('name')} error={editForm.formState.errors.name?.message} />
                   <Input label="Description" placeholder="Optional notes..." {...editForm.register('description')} />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <Button type="submit" className="w-full h-11">Save Changes</Button>
                   <Button variant="ghost" onClick={() => setEditingId(null)} className="w-full h-11">Cancel</Button>
                 </div>
