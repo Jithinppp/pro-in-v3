@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { 
   ArrowRight, 
@@ -21,7 +21,8 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { deleteAsset, updateAsset } from '@/app/(dashboard)/inv/assets/actions'
+import { deleteAsset, updateAsset, getAssetMaintenanceLogs } from '@/app/(dashboard)/inv/assets/actions'
+import { reportDamage } from '@/app/(dashboard)/tech/maintenance/actions'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
@@ -92,7 +93,24 @@ export function AssetDetailView({ asset, updatedAt, locations, suppliers }: Asse
   const [movingAsset, setMovingAsset] = useState<any | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [maintenanceLogs, setMaintenanceLogs] = useState<any[]>([])
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    async function fetchLogs() {
+      setIsLoadingLogs(true)
+      try {
+        const logs = await getAssetMaintenanceLogs(asset.id)
+        setMaintenanceLogs(logs)
+      } catch (error) {
+        console.error('Failed to fetch maintenance logs:', error)
+      } finally {
+        setIsLoadingLogs(false)
+      }
+    }
+    fetchLogs()
+  }, [asset.id])
 
   const {
     register,
@@ -137,6 +155,23 @@ export function AssetDetailView({ asset, updatedAt, locations, suppliers }: Asse
 
   const handleDelete = async () => {
     setConfirmOpen(true)
+  }
+
+  const handleReportDamage = async () => {
+    const description = window.prompt('Describe the damage or fault:')
+    if (!description) return
+
+    try {
+      const result = await reportDamage({ assetId: asset.id, description })
+      if (result.success) {
+        toast.success('Damage reported. Asset moved to maintenance.')
+        router.refresh()
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      toast.error('Failed to report damage')
+    }
   }
 
   const confirmDelete = async () => {
@@ -308,45 +343,90 @@ export function AssetDetailView({ asset, updatedAt, locations, suppliers }: Asse
              </div>
            </section>
  
-           {/* Lifecycle & Maintenance Section */}
-           <section className="space-y-6">
-             <div className="flex items-center gap-4">
-               <h2 className="text-[10px] font-bold text-mid-gray uppercase tracking-[0.3em] whitespace-nowrap">Lifecycle & Maintenance</h2>
-               <div className="h-px w-full bg-border"></div>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <DetailItem 
-                 label="Last Maintenance" 
-                 value={asset.last_maintenance} 
-                 icon={Calendar} 
-                 isEditing={isEditing}
-                 register={register('last_maintenance')}
-                 error={errors.last_maintenance?.message}
-                 type="date"
-               />
-               <DetailItem 
-                 label="Next Maintenance" 
-                 value={asset.next_maintenance} 
-                 icon={Calendar} 
-                 isEditing={isEditing}
-                 register={register('next_maintenance')}
-                 error={errors.next_maintenance?.message}
-                 type="date"
-               />
-              <div className="md:col-span-2">
-                {isEditing ? (
-                  <Input 
-                    label="Technical Description" 
-                    {...register('description')} 
-                    error={errors.description?.message}
-                    className="min-h-[100px] py-3"
-                  />
-                ) : (
-                  <DetailItem label="Technical Description" value={asset.description} icon={Info} />
-                )}
+            {/* Lifecycle & Maintenance Section */}
+            <section className="space-y-6">
+              <div className="flex items-center gap-4">
+                <h2 className="text-[10px] font-bold text-mid-gray uppercase tracking-[0.3em] whitespace-nowrap">Lifecycle & Maintenance</h2>
+                <div className="h-px w-full bg-border"></div>
               </div>
-            </div>
-          </section>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DetailItem 
+                  label="Last Maintenance" 
+                  value={asset.last_maintenance} 
+                  icon={Calendar} 
+                  isEditing={isEditing}
+                  register={register('last_maintenance')}
+                  error={errors.last_maintenance?.message}
+                  type="date"
+                />
+                <DetailItem 
+                  label="Next Maintenance" 
+                  value={asset.next_maintenance} 
+                  icon={Calendar} 
+                  isEditing={isEditing}
+                  register={register('next_maintenance')}
+                  error={errors.next_maintenance?.message}
+                  type="date"
+                />
+                <div className="md:col-span-2">
+                  {isEditing ? (
+                    <Input 
+                      label="Technical Description" 
+                      {...register('description')} 
+                      error={errors.description?.message}
+                      className="min-h-[100px] py-3"
+                    />
+                  ) : (
+                    <DetailItem label="Technical Description" value={asset.description} icon={Info} />
+                  )}
+                </div>
+              </div>
+
+              {/* Maintenance History Log */}
+              {!isEditing && (
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-[11px] font-bold text-mid-gray uppercase tracking-widest">Service History</h3>
+                  {isLoadingLogs ? (
+                    <div className="flex items-center justify-center py-8 text-xs text-mid-gray animate-pulse">
+                      Loading history...
+                    </div>
+                  ) : maintenanceLogs.length > 0 ? (
+                    <div className="space-y-3">
+                      {maintenanceLogs.map((log) => (
+                        <div key={log.id} className="p-4 bg-white border border-border rounded-lg space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="size-3 text-mid-gray" />
+                              <span className="text-xs font-semibold text-charcoal">{log.service_date}</span>
+                            </div>
+                            <span className="text-[10px] font-medium text-mid-gray px-2 py-0.5 bg-secondary rounded-full">
+                              {log.technician || 'System'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-charcoal leading-relaxed">{log.description}</p>
+                          {log.cost && (
+                            <div className="flex items-center gap-1 text-[11px] text-mid-gray italic">
+                              <span>Cost:</span>
+                              <span className="font-medium text-charcoal">${log.cost}</span>
+                            </div>
+                          )}
+                          {log.parts_replaced && (
+                            <div className="flex items-center gap-1 text-[11px] text-mid-gray italic">
+                              <span>Parts:</span>
+                              <span className="font-medium text-charcoal">{log.parts_replaced}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center border border-dashed border-border rounded-lg">
+                      <p className="text-xs text-mid-gray italic">No maintenance records found for this asset.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
         </div>
 
         {/* Actions Sidebar */}
@@ -395,9 +475,19 @@ export function AssetDetailView({ asset, updatedAt, locations, suppliers }: Asse
                 </Button>
               )}
 
-              {!isEditing && (
-                <Button 
-                  variant="danger"
+               {!isEditing && (
+                 <Button 
+                   variant="secondary"
+                   className="w-full justify-start gap-3 h-12 text-sm font-semibold text-charcoal hover:bg-secondary/80 transition-all mb-3"
+                   onClick={handleReportDamage}
+                 >
+                   <Activity className="size-4 text-destructive" />
+                   Report Damage
+                 </Button>
+               )}
+               {!isEditing && (
+                 <Button 
+                   variant="danger"
                   className="w-full justify-center gap-3 h-12 text-sm font-semibold hover:bg-destructive/90 transition-all"
                   onClick={handleDelete}
                 >

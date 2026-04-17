@@ -50,13 +50,20 @@ export async function updateAsset(id: string, updates: any) {
   if (authError || !user) {
     throw new Error('Unauthorized: You must be logged in to update assets')
   }
-
+  
   const validatedUpdates = updateAssetSchema.parse(updates)
   
   const finalUpdates = { ...validatedUpdates }
   const dateFields = ['purchase_date', 'warranty_expiry', 'last_maintenance', 'next_maintenance']
+  const uuidFields = ['location_id', 'supplier_id', 'model_id']
   
   dateFields.forEach(field => {
+    if (finalUpdates[field as keyof typeof finalUpdates] === '') {
+      (finalUpdates as any)[field] = null
+    }
+  })
+
+  uuidFields.forEach(field => {
     if (finalUpdates[field as keyof typeof finalUpdates] === '') {
       (finalUpdates as any)[field] = null
     }
@@ -66,11 +73,28 @@ export async function updateAsset(id: string, updates: any) {
     .from('assets')
     .update(finalUpdates)
     .eq('id', id)
-
+  
   if (error) {
     throw new Error(error.message)
   }
-
+  
   revalidatePath('/inv/assets')
   return { success: true }
 }
+
+export async function getAssetMaintenanceLogs(assetId: string) {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('maintenance_logs')
+    .select('*')
+    .eq('asset_id', assetId)
+    .order('service_date', { ascending: false })
+    
+  if (error) {
+    throw new Error(error.message)
+  }
+  
+  return data
+}
+
